@@ -3,3 +3,13 @@
 
 .venv
 .env
+
+# Python caches
+__pycache__/
+*.py[cod]
+*.pyo
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.cache/
+*.egg-info/

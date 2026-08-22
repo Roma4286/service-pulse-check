@@ -19,7 +19,9 @@ Mako==1.4.1
 MarkupSafe==3.0.3
 packaging==26.3
 prompt_toolkit==3.0.53
+psycopg2==2.9.12
 python-dateutil==2.9.0.post0
+python-dotenv==1.2.3
 redis==8.1.0
 six==1.17.0
 SQLAlchemy==2.0.52

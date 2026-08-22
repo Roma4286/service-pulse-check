@@ -15,6 +15,10 @@ class ServiceType(enum.Enum):
     HTTP = "http"
     TCP = "tcp"
 
+class ResultStatus(enum.Enum):
+    SUCCESS = "success"
+    FAIL = "fail"
+
 class Service(Base):
     __tablename__ = "services"
 
@@ -36,6 +40,7 @@ class CheckResult(Base):
     service_id: Mapped[int] = mapped_column(ForeignKey("services.id"))
     service: Mapped["Service"] = relationship("Service", back_populates="checks")
 
-    status_code: Mapped[int] = mapped_column()
+    status: Mapped[ResultStatus] = mapped_column(Enum(ResultStatus))
+
     response_time: Mapped[float] = mapped_column()
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())

@@ -16,6 +16,11 @@ def create_app():
     app.config["CELERY"] = {
         "broker_url": f"{REDIS_URL}/0",
         "result_backend": f"{REDIS_URL}/1",
+        "timezone": "Europe/Moscow",
+        "task_track_started": True,
+
+        "beat_scheduler": "redbeat.RedBeatScheduler",
+        "redbeat_lock_timeout": 60,
     }
 
     db.init_app(app)

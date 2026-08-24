@@ -14,8 +14,8 @@ def create_app():
     app = Flask(__name__)
     app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
     app.config["CELERY"] = {
-        "broker_url": REDIS_URL,
-        "result_backend": REDIS_URL,
+        "broker_url": f"{REDIS_URL}/0",
+        "result_backend": f"{REDIS_URL}/1",
     }
 
     db.init_app(app)

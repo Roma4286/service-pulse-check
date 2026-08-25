@@ -1,11 +1,7 @@
-from sqlalchemy.orm import Session
-
 from app.models import Service, ServiceType, ServiceStatus
+from .base_repository import BaseRepository
 
-class ServiceRepository:
-    def __init__(self, db_session: Session):
-        self.db_session = db_session
-
+class ServiceRepository(BaseRepository):
     def get_service_by_id(self, service_id: int) -> Service | None:
         return self.db_session.get(Service, service_id)
 

@@ -1,11 +1,7 @@
-from sqlalchemy.orm import Session
-
 from app.models import CheckResult, ResultStatus
+from .base_repository import BaseRepository
 
-class CheckResultRepository:
-    def __init__(self, db_session: Session):
-        self.db_session = db_session
-
+class CheckResultRepository(BaseRepository):
     def get_result_by_service_id(self, service_id: int) -> list:
         return self.db_session.query(CheckResult).filter_by(service_id=service_id).all()
 

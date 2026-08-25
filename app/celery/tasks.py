@@ -1,3 +1,4 @@
+import logging
 from celery import Celery
 from redbeat import RedBeatSchedulerEntry
 
@@ -8,6 +9,8 @@ from .celery_app import celery_app
 from .checkers.http import HttpChecker
 from .checkers.tcp import TcpChecker
 from ..models import ServiceType, ResultStatus
+
+logger = logging.getLogger(__name__)
 
 celery = celery_app
 
@@ -20,9 +23,16 @@ CHECKERS: dict[ServiceType, BaseChecker] = {
 def check_service_task(service_id: int, url: str, service_type: str):
     checker = CHECKERS[ServiceType(service_type)]
     status, response_time = checker.check(url)
-    CheckResultRepository(Session()).create_result(
-        service_id, ResultStatus.SUCCESS if status else ResultStatus.FAIL, response_time
-    )
+    session = Session()
+    try: 
+        CheckResultRepository(session).create_result(
+            service_id, ResultStatus.SUCCESS if status else ResultStatus.FAIL, response_time
+        )
+    except Exception as e:
+        logger.exception("Failed to save check result for service_id=%s", service_id)
+    finally:
+        Session.remove()
+
 
 
 class ServiceScheduler():

@@ -12,7 +12,7 @@ class HttpChecker(BaseChecker):
         start = time.monotonic()
         try:
             response = requests.get(url, timeout=self.timeout)
-            status_code = True if response.status_code == 200 else False
+            status_code = 200 <= response.status_code < 400
         except requests.RequestException:
             status_code = False
 

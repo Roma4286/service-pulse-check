@@ -1,15 +1,15 @@
 from celery import Celery
 from redbeat import RedBeatSchedulerEntry
 
-from app.checkers.base import BaseChecker
+from app.celery.checkers.base import BaseChecker
 from app.repositories.check_result_repository import CheckResultRepository
-
-from .__init__ import create_app
+from ..database import Session
+from .celery_app import celery_app
 from .checkers.http import HttpChecker
 from .checkers.tcp import TcpChecker
-from .models import ServiceType, ResultStatus
+from ..models import ServiceType, ResultStatus
 
-celery: Celery = create_app().extensions["celery"]
+celery = celery_app
 
 CHECKERS: dict[ServiceType, BaseChecker] = {
     ServiceType.HTTP: HttpChecker(),
@@ -20,7 +20,7 @@ CHECKERS: dict[ServiceType, BaseChecker] = {
 def check_service_task(service_id: int, url: str, service_type: str):
     checker = CHECKERS[ServiceType(service_type)]
     status, response_time = checker.check(url)
-    CheckResultRepository().create_result(
+    CheckResultRepository(Session()).create_result(
         service_id, ResultStatus.SUCCESS if status else ResultStatus.FAIL, response_time
     )
 

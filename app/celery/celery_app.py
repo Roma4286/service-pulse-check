@@ -1,16 +1,10 @@
-import os
-from dotenv import load_dotenv
-
 import celery
 
-load_dotenv()
-
-REDIS_URL = os.environ.get("REDIS_URL")
-
+from ..config import settings
 
 config_dict = {
-        "broker_url": f"{REDIS_URL}/0",
-        "result_backend": f"{REDIS_URL}/1",
+        "broker_url": f"{settings.redis_url}/0",
+        "result_backend": f"{settings.redis_url}/1",
         "timezone": "Europe/Moscow",
         "task_track_started": True,
 

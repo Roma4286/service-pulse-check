@@ -1,5 +1,6 @@
 alembic==1.19.1
 amqp==5.3.1
+annotated-types==0.8.0
 billiard==4.2.4
 blinker==1.9.0
 celery==5.6.3
@@ -22,6 +23,8 @@ MarkupSafe==3.0.3
 packaging==26.3
 prompt_toolkit==3.0.53
 psycopg2==2.9.12
+pydantic==2.13.4
+pydantic_core==2.46.4
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.3
 redis==8.1.0
@@ -29,6 +32,7 @@ requests==2.34.2
 six==1.17.0
 SQLAlchemy==2.0.52
 tenacity==9.1.4
+typing-inspection==0.4.4
 typing_extensions==4.16.0
 tzdata==2026.3
 tzlocal==5.4.4

@@ -10,4 +10,7 @@ def create_app():
     def remove_session(exception=None):
         Session.remove()
 
+    from .api import bp as api_bp
+    app.register_blueprint(api_bp, url_prefix='/api')
+
     return app

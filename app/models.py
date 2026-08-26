@@ -27,6 +27,7 @@ class Service(Base):
     url: Mapped[str] = mapped_column()
     status: Mapped[ServiceStatus] = mapped_column(Enum(ServiceStatus))
     type: Mapped[ServiceType] = mapped_column(Enum(ServiceType))
+    interval_in_seconds: Mapped[int] = mapped_column()
 
     checks: Mapped[list["CheckResult"]] = relationship("CheckResult", back_populates="service", cascade="all, delete-orphan")
 

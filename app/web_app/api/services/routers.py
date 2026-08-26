@@ -2,9 +2,11 @@ from flask import Blueprint, abort
 
 from flask_pydantic import validate
 
-from app.models import Service
+from app.models import Service, ServiceStatus
 from app.repositories.service_repository import ServiceRepository
 from app.database import Session as database_session
+from app.celery.tasks import ServiceScheduler
+from app.celery.celery_app import celery_app
 
 from .schemas import ServiceCreateSchema, ServiceListQuerySchema, ServiceUpdateSchema
 
@@ -14,6 +16,8 @@ STATUS_TO_IS_ACTIVE = {
     "active": True,
     "inactive": False,
 }
+
+scheduler = ServiceScheduler(celery_app)
 
 def serialize_service(service: Service) -> dict:
     return {
@@ -53,6 +57,12 @@ def create_service(body: ServiceCreateSchema):
     service = service_repo.create_new_service(
         name=body.name, url=str(body.url), type=body.type, interval_in_seconds=body.interval_in_seconds
     )
+    scheduler.create_task(
+        service_id=service.id,
+        url=str(body.url),
+        service_type=body.type,
+        interval_in_seconds=body.interval_in_seconds,
+    )
     return serialize_service(service), 201
 
 
@@ -60,18 +70,31 @@ def create_service(body: ServiceCreateSchema):
 @validate()
 def update_service(service_id, body: ServiceUpdateSchema):
     service_repo = ServiceRepository(database_session())
-    service = service_repo.update_service(
-        service_id,
-        name=body.name,
-        url=str(body.url) if body.url is not None else None,
-        type=body.type,
-        status=body.status,
-        interval_in_seconds=body.interval_in_seconds,
-    )
+    service = service_repo.get_service_by_id(service_id)
     if service is None:
         abort(404, description="Service not found")
 
+    previous_status = service.status
+
+    service = service_repo.update_service(
+        service_id,
+        name=body.name,
+        status=body.status,
+        interval_in_seconds=body.interval_in_seconds,
+    )
+
+    if previous_status == ServiceStatus.ACTIVE and body.status == ServiceStatus.INACTIVE:
+        scheduler.delete_task(service_id)
+    elif previous_status == ServiceStatus.INACTIVE and body.status == ServiceStatus.ACTIVE:
+        scheduler.create_task(
+            service_id=service.id,
+            url=service.url,
+            service_type=service.type,
+            interval_in_seconds=service.interval_in_seconds,
+        )
+
     return serialize_service(service)
+
 
 
 @services_bp.route('/<int:service_id>', methods=['DELETE'])
@@ -80,5 +103,7 @@ def delete_service(service_id):
     deleted = service_repo.delete_service(service_id)
     if not deleted:
         abort(404, description="Service not found")
+
+    scheduler.delete_task(service_id)
 
     return '', 204

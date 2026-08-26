@@ -65,6 +65,7 @@ def update_service(service_id, body: ServiceUpdateSchema):
         name=body.name,
         url=str(body.url) if body.url is not None else None,
         type=body.type,
+        status=body.status
     )
     if service is None:
         abort(404, description="Service not found")

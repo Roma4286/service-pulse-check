@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import BaseModel, HttpUrl
 
-from app.models import ServiceType
+from app.models import ServiceType, ServiceStatus
 
 
 class ServiceListQuerySchema(BaseModel):
@@ -19,3 +19,4 @@ class ServiceUpdateSchema(BaseModel):
     name: str | None = None
     url: HttpUrl | None = None
     type: ServiceType | None = None
+    status: ServiceStatus | None = None 

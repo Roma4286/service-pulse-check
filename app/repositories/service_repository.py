@@ -3,22 +3,30 @@ from .base_repository import BaseRepository
 
 class ServiceRepository(BaseRepository):
     def get_service_by_id(self, service_id: int) -> Service | None:
-        return self.db_session.get(Service, service_id)
+        service = self.db_session.get(Service, service_id)
+        if service is not None:
+            self.db_session.expunge(service)
+        return service
 
-    def get_services(self, is_active: None | bool = None) -> list[Service]:
-        if is_active is None:
-            return self.db_session.query(Service).all()
-        return self.db_session.query(Service)\
-            .filter_by(status=ServiceStatus.ACTIVE if is_active else ServiceStatus.INACTIVE).all()
+    def get_services(self, is_active: bool | None = None) -> list[Service]:
+        query = self.db_session.query(Service)
+        if is_active is not None:
+            query = query.filter_by(status=ServiceStatus.ACTIVE if is_active else ServiceStatus.INACTIVE)
+
+        services = query.all()
+        for service in services:
+            self.db_session.expunge(service)
+        return services
 
     def create_new_service(self, name: str, url: str, type: ServiceType, is_db_transaction: bool = False) -> Service:
         service = Service(name=name, url=url, type=type, status=ServiceStatus.ACTIVE)
         self.db_session.add(service)
 
-        if not is_db_transaction:
+        if is_db_transaction:
+            self.db_session.flush()
+        else:
             self.db_session.commit()
 
+        self.db_session.expunge(service)
         return service
-        
-    def db_commit(self) -> None:
-        self.db_session.commit()
+    

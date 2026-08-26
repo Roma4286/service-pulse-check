@@ -18,8 +18,8 @@ class ServiceRepository(BaseRepository):
             self.db_session.expunge(service)
         return services
 
-    def create_new_service(self, name: str, url: str, type: ServiceType, is_db_transaction: bool = False) -> Service:
-        service = Service(name=name, url=url, type=type, status=ServiceStatus.ACTIVE)
+    def create_new_service(self, name: str, url: str, type: ServiceType, interval_in_seconds: int, is_db_transaction: bool = False) -> Service:
+        service = Service(name=name, url=url, type=type, status=ServiceStatus.ACTIVE, interval_in_seconds=interval_in_seconds)
         self.db_session.add(service)
 
         if is_db_transaction:
@@ -36,6 +36,7 @@ class ServiceRepository(BaseRepository):
                         url: str | None = None,
                         type: ServiceType | None = None,
                         status: ServiceStatus | None = None,
+                        interval_in_seconds: int | None = None,
                         is_db_transaction: bool = False) -> Service | None:
         service = self.db_session.get(Service, service_id)
         if service is None:
@@ -49,6 +50,8 @@ class ServiceRepository(BaseRepository):
             service.type = type
         if status is not None:
             service.status = status
+        if interval_in_seconds is not None:
+            service.interval_in_seconds = interval_in_seconds
 
         if is_db_transaction:
             self.db_session.flush()

@@ -15,7 +15,6 @@ STATUS_TO_IS_ACTIVE = {
     "inactive": False,
 }
 
-
 def serialize_service(service: Service) -> dict:
     return {
         "id": service.id,
@@ -23,6 +22,7 @@ def serialize_service(service: Service) -> dict:
         "url": service.url,
         "type": service.type.value,
         "status": service.status.value,
+        "interval_in_seconds": service.interval_in_seconds,
     }
 
 
@@ -51,7 +51,7 @@ def get_service(service_id):
 def create_service(body: ServiceCreateSchema):
     service_repo = ServiceRepository(database_session())
     service = service_repo.create_new_service(
-        name=body.name, url=str(body.url), type=body.type
+        name=body.name, url=str(body.url), type=body.type, interval_in_seconds=body.interval_in_seconds
     )
     return serialize_service(service), 201
 
@@ -65,7 +65,8 @@ def update_service(service_id, body: ServiceUpdateSchema):
         name=body.name,
         url=str(body.url) if body.url is not None else None,
         type=body.type,
-        status=body.status
+        status=body.status,
+        interval_in_seconds=body.interval_in_seconds,
     )
     if service is None:
         abort(404, description="Service not found")

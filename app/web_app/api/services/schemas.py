@@ -18,7 +18,5 @@ class ServiceCreateSchema(BaseModel):
 
 class ServiceUpdateSchema(BaseModel):
     name: str | None = None
-    url: HttpUrl | None = None
-    type: ServiceType | None = None
     status: ServiceStatus | None = None
     interval_in_seconds: int | None = None

@@ -75,6 +75,7 @@ def update_service(service_id, body: ServiceUpdateSchema):
         abort(404, description="Service not found")
 
     previous_status = service.status
+    previous_interval_in_seconds = service.interval_in_seconds
 
     service = service_repo.update_service(
         service_id,
@@ -83,15 +84,22 @@ def update_service(service_id, body: ServiceUpdateSchema):
         interval_in_seconds=body.interval_in_seconds,
     )
 
-    if previous_status == ServiceStatus.ACTIVE and body.status == ServiceStatus.INACTIVE:
+    new_status = service.status
+
+    if previous_status == ServiceStatus.ACTIVE and new_status == ServiceStatus.INACTIVE:
         scheduler.delete_task(service_id)
-    elif previous_status == ServiceStatus.INACTIVE and body.status == ServiceStatus.ACTIVE:
+    elif previous_status == ServiceStatus.INACTIVE and new_status == ServiceStatus.ACTIVE:
         scheduler.create_task(
-            service_id=service.id,
-            url=service.url,
-            service_type=service.type,
-            interval_in_seconds=service.interval_in_seconds,
+            service_id=service.id, url=service.url,
+            service_type=service.type, interval_in_seconds=service.interval_in_seconds,
         )
+    elif new_status == ServiceStatus.ACTIVE and previous_interval_in_seconds != service.interval_in_seconds:
+        scheduler.delete_task(service_id)
+        scheduler.create_task(
+            service_id=service.id, url=service.url,
+            service_type=service.type, interval_in_seconds=service.interval_in_seconds,
+    )
+
 
     return serialize_service(service)
 

@@ -11,7 +11,14 @@ class ServiceRepository(BaseRepository):
         return self.db_session.query(Service)\
             .filter_by(status=ServiceStatus.ACTIVE if is_active else ServiceStatus.INACTIVE).all()
 
-    def create_new_service(self, name: str, url: str, type: ServiceType) -> None:
+    def create_new_service(self, name: str, url: str, type: ServiceType, is_db_transaction: bool = False) -> Service:
         service = Service(name=name, url=url, type=type, status=ServiceStatus.ACTIVE)
         self.db_session.add(service)
+
+        if not is_db_transaction:
+            self.db_session.commit()
+
+        return service
+        
+    def db_commit(self) -> None:
         self.db_session.commit()

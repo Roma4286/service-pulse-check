@@ -45,6 +45,7 @@ class ServiceScheduler():
             task="check_service",
             schedule=interval_in_seconds,
             args=[service_id, url, service_type.value],
+            options={"expires": interval_in_seconds-1},
             app=self.celery_app,
         )
         entry.save()

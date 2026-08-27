@@ -17,6 +17,16 @@ class ServiceCreateSchema(BaseModel):
 
 
 class ServiceUpdateSchema(BaseModel):
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "name": "my-service",
+                "status": "active",
+                "interval_in_seconds": 60,
+            }
+        }
+    }
+
     name: str | None = None
     status: ServiceStatus | None = None
     interval_in_seconds: int | None = None

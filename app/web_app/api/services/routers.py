@@ -1,4 +1,4 @@
-from flask import Blueprint, abort
+from flask import Blueprint
 
 from flask_pydantic import validate
 
@@ -9,6 +9,7 @@ from app.celery.tasks import ServiceScheduler
 from app.celery.celery_app import celery_app
 
 from .schemas import ServiceCreateSchema, ServiceListQuerySchema, ServiceUpdateSchema
+from ..responses import api_response, not_found
 
 services_bp = Blueprint('services', __name__, url_prefix='/services')
 
@@ -37,7 +38,7 @@ def get_services(query: ServiceListQuerySchema):
 
     service_repo = ServiceRepository(database_session())
     services = service_repo.get_services(is_active=is_active)
-    return {"services": [serialize_service(service) for service in services]}
+    return api_response(data={"services": [serialize_service(service) for service in services]})
 
 
 @services_bp.route('/<int:service_id>', methods=['GET'])
@@ -45,9 +46,9 @@ def get_service(service_id):
     service_repo = ServiceRepository(database_session())
     service = service_repo.get_service_by_id(service_id)
     if service is None:
-        abort(404, description="Service not found")
+        return not_found("Service not found")
 
-    return serialize_service(service)
+    return api_response(data=serialize_service(service))
 
 
 @services_bp.route('', methods=['POST'])
@@ -63,7 +64,7 @@ def create_service(body: ServiceCreateSchema):
         service_type=body.type,
         interval_in_seconds=body.interval_in_seconds,
     )
-    return serialize_service(service), 201
+    return api_response(data=serialize_service(service), status_code=201)
 
 
 @services_bp.route('/<int:service_id>', methods=['PATCH'])
@@ -72,7 +73,7 @@ def update_service(service_id, body: ServiceUpdateSchema):
     service_repo = ServiceRepository(database_session())
     service = service_repo.get_service_by_id(service_id)
     if service is None:
-        abort(404, description="Service not found")
+        return not_found("Service not found")
 
     previous_status = service.status
     previous_interval_in_seconds = service.interval_in_seconds
@@ -101,8 +102,7 @@ def update_service(service_id, body: ServiceUpdateSchema):
     )
 
 
-    return serialize_service(service)
-
+    return api_response(data=serialize_service(service))
 
 
 @services_bp.route('/<int:service_id>', methods=['DELETE'])
@@ -110,8 +110,8 @@ def delete_service(service_id):
     service_repo = ServiceRepository(database_session())
     deleted = service_repo.delete_service(service_id)
     if not deleted:
-        abort(404, description="Service not found")
+        return not_found("Service not found")
 
     scheduler.delete_task(service_id)
 
-    return '', 204
+    return api_response(status_code=204)

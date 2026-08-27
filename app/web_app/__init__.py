@@ -5,6 +5,7 @@ from app.database import Session
 
 def create_app():
     app = Flask(__name__)
+    app.config["FLASK_PYDANTIC_VALIDATION_ERROR_RAISE"] = True
 
     @app.teardown_appcontext
     def remove_session(exception=None):

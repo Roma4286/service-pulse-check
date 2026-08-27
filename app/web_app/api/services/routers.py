@@ -2,8 +2,9 @@ from flask import Blueprint
 
 from flask_pydantic import validate
 
-from app.models import Service, ServiceStatus
+from app.models import Service, CheckResult, ServiceStatus
 from app.repositories.service_repository import ServiceRepository
+from app.repositories.check_result_repository import CheckResultRepository
 from app.database import Session as database_session
 from app.celery.tasks import ServiceScheduler
 from app.celery.celery_app import celery_app
@@ -28,6 +29,16 @@ def serialize_service(service: Service) -> dict:
         "type": service.type.value,
         "status": service.status.value,
         "interval_in_seconds": service.interval_in_seconds,
+    }
+
+
+def serialize_check_result(check_result: CheckResult) -> dict:
+    return {
+        "id": check_result.id,
+        "service_id": check_result.service_id,
+        "status": check_result.status.value,
+        "response_time": check_result.response_time,
+        "created_at": check_result.created_at.isoformat(),
     }
 
 
@@ -114,4 +125,37 @@ def delete_service(service_id):
 
     scheduler.delete_task(service_id)
 
+    return api_response(status_code=204)
+
+@services_bp.route('/<int:service_id>/results', methods=['GET'])
+def get_service_results(service_id):
+    service_repo = ServiceRepository(database_session())
+    service = service_repo.get_service_by_id(service_id)
+    if service is None:
+        return not_found("Service not found")
+
+    result_repo = CheckResultRepository(database_session())
+    results = result_repo.get_result_by_service_id(service_id)
+    return api_response(data={"results": [serialize_check_result(result) for result in results]})
+
+
+@services_bp.route('/<int:service_id>/results/<int:result_id>', methods=['DELETE'])
+def delete_service_result(result_id):
+    result_repo = CheckResultRepository(database_session())
+    deleted = result_repo.delete_result(result_id)
+    if not deleted:
+        return not_found("Result not found")
+
+    return api_response(status_code=204)
+
+
+@services_bp.route('/<int:service_id>/results', methods=['DELETE'])
+def delete_service_results(service_id):
+    service_repo = ServiceRepository(database_session())
+    service = service_repo.get_service_by_id(service_id)
+    if service is None:
+        return not_found("Service not found")
+
+    result_repo = CheckResultRepository(database_session())
+    result_repo.delete_results_by_service_id(service_id)
     return api_response(status_code=204)

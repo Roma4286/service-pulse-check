@@ -19,3 +19,23 @@ class CheckResultRepository(BaseRepository):
 
         self.db_session.expunge(check_result)
         return check_result
+
+    def delete_result(self, result_id: int, is_db_transaction: bool = False) -> bool:
+        result = self.db_session.get(CheckResult, result_id)
+        if result is None:
+            return False
+
+        self.db_session.delete(result)
+
+        if not is_db_transaction:
+            self.db_session.commit()
+
+        return True
+
+    def delete_results_by_service_id(self, service_id: int, is_db_transaction: bool = False) -> int:
+        deleted = self.db_session.query(CheckResult).filter_by(service_id=service_id).delete()
+
+        if not is_db_transaction:
+            self.db_session.commit()
+
+        return deleted

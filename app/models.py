@@ -38,7 +38,7 @@ class CheckResult(Base):
     __tablename__ = "check_results"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    service_id: Mapped[int] = mapped_column(ForeignKey("services.id"))
+    service_id: Mapped[int] = mapped_column(ForeignKey("services.id", ondelete="CASCADE"))
     service: Mapped["Service"] = relationship("Service", back_populates="checks")
 
     status: Mapped[ResultStatus] = mapped_column(Enum(ResultStatus))

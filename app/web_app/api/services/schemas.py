@@ -20,3 +20,46 @@ class ServiceUpdateSchema(BaseModel):
     name: str | None = None
     status: ServiceStatus | None = None
     interval_in_seconds: int | None = None
+
+
+class ServiceSchema(BaseModel):
+    id: int
+    name: str
+    url: str
+    type: str
+    status: str
+    interval_in_seconds: int
+
+
+class ServiceListDataSchema(BaseModel):
+    services: list[ServiceSchema]
+
+
+class CheckResultSchema(BaseModel):
+    id: int
+    service_id: int
+    status: str
+    response_time: float
+    created_at: str
+
+
+class CheckResultListDataSchema(BaseModel):
+    results: list[CheckResultSchema]
+
+
+class ServiceResponseSchema(BaseModel):
+    success: bool
+    message: str | None = None
+    data: ServiceSchema
+
+
+class ServiceListResponseSchema(BaseModel):
+    success: bool
+    message: str | None = None
+    data: ServiceListDataSchema
+
+
+class CheckResultListResponseSchema(BaseModel):
+    success: bool
+    message: str | None = None
+    data: CheckResultListDataSchema

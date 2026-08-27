@@ -1,7 +1,8 @@
-from flask import Blueprint
+from flask import Blueprint, request
 
-from flask_pydantic import validate
+from flask_pydantic_spec import Response
 
+from app.web_app import spec
 from app.models import Service, CheckResult, ServiceStatus
 from app.repositories.service_repository import ServiceRepository
 from app.repositories.check_result_repository import CheckResultRepository
@@ -9,7 +10,14 @@ from app.database import Session as database_session
 from app.celery.tasks import ServiceScheduler
 from app.celery.celery_app import celery_app
 
-from .schemas import ServiceCreateSchema, ServiceListQuerySchema, ServiceUpdateSchema
+from .schemas import (
+    ServiceCreateSchema,
+    ServiceListQuerySchema,
+    ServiceUpdateSchema,
+    ServiceResponseSchema,
+    ServiceListResponseSchema,
+    CheckResultListResponseSchema,
+)
 from ..responses import api_response, not_found
 
 services_bp = Blueprint('services', __name__, url_prefix='/services')
@@ -43,8 +51,9 @@ def serialize_check_result(check_result: CheckResult) -> dict:
 
 
 @services_bp.route('', methods=['GET'])
-@validate()
-def get_services(query: ServiceListQuerySchema):
+@spec.validate(query=ServiceListQuerySchema, resp=Response(HTTP_200=ServiceListResponseSchema), tags=["services"])
+def get_services():
+    query = request.context.query
     is_active = STATUS_TO_IS_ACTIVE.get(query.status) if query.status else None
 
     service_repo = ServiceRepository(database_session())
@@ -53,6 +62,7 @@ def get_services(query: ServiceListQuerySchema):
 
 
 @services_bp.route('/<int:service_id>', methods=['GET'])
+@spec.validate(resp=Response("HTTP_404", HTTP_200=ServiceResponseSchema), tags=["services"])
 def get_service(service_id):
     service_repo = ServiceRepository(database_session())
     service = service_repo.get_service_by_id(service_id)
@@ -63,8 +73,10 @@ def get_service(service_id):
 
 
 @services_bp.route('', methods=['POST'])
-@validate()
-def create_service(body: ServiceCreateSchema):
+@spec.validate(body=ServiceCreateSchema, resp=Response(HTTP_201=ServiceResponseSchema), tags=["services"])
+def create_service():
+    body = request.context.body
+
     service_repo = ServiceRepository(database_session())
     service = service_repo.create_new_service(
         name=body.name, url=str(body.url), type=body.type, interval_in_seconds=body.interval_in_seconds
@@ -79,8 +91,10 @@ def create_service(body: ServiceCreateSchema):
 
 
 @services_bp.route('/<int:service_id>', methods=['PATCH'])
-@validate()
-def update_service(service_id, body: ServiceUpdateSchema):
+@spec.validate(body=ServiceUpdateSchema, resp=Response("HTTP_404", HTTP_200=ServiceResponseSchema), tags=["services"])
+def update_service(service_id):
+    body = request.context.body
+
     service_repo = ServiceRepository(database_session())
     service = service_repo.get_service_by_id(service_id)
     if service is None:
@@ -117,6 +131,7 @@ def update_service(service_id, body: ServiceUpdateSchema):
 
 
 @services_bp.route('/<int:service_id>', methods=['DELETE'])
+@spec.validate(resp=Response("HTTP_204", "HTTP_404"), tags=["services"])
 def delete_service(service_id):
     service_repo = ServiceRepository(database_session())
     deleted = service_repo.delete_service(service_id)
@@ -128,6 +143,7 @@ def delete_service(service_id):
     return api_response(status_code=204)
 
 @services_bp.route('/<int:service_id>/results', methods=['GET'])
+@spec.validate(resp=Response("HTTP_404", HTTP_200=CheckResultListResponseSchema), tags=["services"])
 def get_service_results(service_id):
     service_repo = ServiceRepository(database_session())
     service = service_repo.get_service_by_id(service_id)
@@ -140,7 +156,8 @@ def get_service_results(service_id):
 
 
 @services_bp.route('/<int:service_id>/results/<int:result_id>', methods=['DELETE'])
-def delete_service_result(result_id):
+@spec.validate(resp=Response("HTTP_204", "HTTP_404"), tags=["services"])
+def delete_service_result(service_id, result_id):
     result_repo = CheckResultRepository(database_session())
     deleted = result_repo.delete_result(result_id)
     if not deleted:
@@ -150,6 +167,7 @@ def delete_service_result(result_id):
 
 
 @services_bp.route('/<int:service_id>/results', methods=['DELETE'])
+@spec.validate(resp=Response("HTTP_204", "HTTP_404"), tags=["services"])
 def delete_service_results(service_id):
     service_repo = ServiceRepository(database_session())
     service = service_repo.get_service_by_id(service_id)

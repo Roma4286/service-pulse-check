@@ -40,6 +40,21 @@ def handle_validation_error(e):
     return error_response(400, errors)
 
 
+def reformat_spec_validation_error(req, resp, req_validation_error, instance):
+    """`flask_pydantic_spec` raises validation failures as a raw WSGI
+    response wrapped in a code-less HTTPException, which Flask returns
+    unchanged and never routes through our errorhandlers. Rewrite the
+    response body/status here, before it gets aborted, to match the
+    shared error_response format."""
+    if req_validation_error is None:
+        return
+
+    payload, status_code = error_response(400, resp.get_json())
+    resp.set_data(jsonify(payload).get_data())
+    resp.status_code = status_code
+    resp.headers["Content-Type"] = "application/json"
+
+
 def api_response(data=None, message=None, status_code=200):
     response = {
         "success": status_code < 400,

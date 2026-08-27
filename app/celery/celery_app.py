@@ -10,6 +10,8 @@ config_dict = {
 
         "beat_scheduler": "redbeat.RedBeatScheduler",
         "redbeat_lock_timeout": 60,
+
+        "beat_max_loop_interval": 30,
     }
 
 celery_app = celery.Celery("service_pulse_check")

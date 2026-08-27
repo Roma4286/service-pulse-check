@@ -1,6 +1,7 @@
 import logging
 from celery import Celery
 from redbeat import RedBeatSchedulerEntry
+from redbeat.schedulers import ensure_conf, get_redis
 
 from app.celery.checkers.base import BaseChecker
 from app.repositories.check_result_repository import CheckResultRepository
@@ -50,7 +51,15 @@ class ServiceScheduler():
         )
         entry.save()
 
+    def task_exists(self, service_id: int) -> bool:
+        ensure_conf(self.celery_app)
+        key = RedBeatSchedulerEntry.generate_key(self.celery_app, f"check_service_{service_id}")
+        return bool(get_redis(self.celery_app).exists(key))
+
     def delete_task(self, service_id: int):
+        if not self.task_exists(service_id):
+            return
+
         entry = RedBeatSchedulerEntry.from_key(
             f"redbeat:check_service_{service_id}", app=self.celery_app
         )

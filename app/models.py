@@ -7,10 +7,6 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 class Base(DeclarativeBase):
     pass
 
-class ServiceStatus(enum.Enum):
-    ACTIVE = "active"
-    INACTIVE = "inactive"
-
 class ServiceType(enum.Enum):
     HTTP = "http"
     TCP = "tcp"
@@ -25,7 +21,8 @@ class Service(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column()
     url: Mapped[str] = mapped_column()
-    status: Mapped[ServiceStatus] = mapped_column(Enum(ServiceStatus))
+    is_active: Mapped[bool] = mapped_column(default=True)
+    timeout_in_seconds: Mapped[float] = mapped_column(default=5.0)
     type: Mapped[ServiceType] = mapped_column(Enum(ServiceType))
     interval_in_seconds: Mapped[int] = mapped_column()
 

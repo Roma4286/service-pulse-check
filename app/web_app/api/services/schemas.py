@@ -1,4 +1,4 @@
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl, model_validator
 
 from app.models import ServiceType
 
@@ -11,8 +11,14 @@ class ServiceCreateSchema(BaseModel):
     name: str
     url: HttpUrl
     type: ServiceType
-    interval_in_seconds: int
-    timeout_in_seconds: float = 5.0
+    interval_in_seconds: int = Field(gt=0)
+    timeout_in_seconds: float = Field(default=5.0, gt=0)
+
+    @model_validator(mode="after")
+    def check_timeout_not_greater_than_interval(self):
+        if self.timeout_in_seconds > self.interval_in_seconds:
+            raise ValueError("timeout_in_seconds must not be greater than interval_in_seconds")
+        return self
 
 
 class ServiceUpdateSchema(BaseModel):
@@ -29,8 +35,8 @@ class ServiceUpdateSchema(BaseModel):
 
     name: str | None = None
     is_active: bool | None = None
-    interval_in_seconds: int | None = None
-    timeout_in_seconds: float | None = None
+    interval_in_seconds: int | None = Field(default=None, gt=0)
+    timeout_in_seconds: float | None = Field(default=None, gt=0)
 
 
 class ServiceSchema(BaseModel):

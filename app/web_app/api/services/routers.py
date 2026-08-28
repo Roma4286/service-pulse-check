@@ -13,7 +13,7 @@ from .schemas import (
     ServiceListResponseSchema,
     CheckResultListResponseSchema,
 )
-from ..responses import api_response, not_found
+from ..responses import api_response, bad_request, not_found
 
 services_bp = Blueprint('services', __name__, url_prefix='/services')
 
@@ -93,6 +93,15 @@ def update_service(service_id):
     previous_is_active = service.is_active
     previous_interval_in_seconds = service.interval_in_seconds
     previous_timeout_in_seconds = service.timeout_in_seconds
+
+    new_interval_in_seconds = (
+        body.interval_in_seconds if body.interval_in_seconds is not None else previous_interval_in_seconds
+    )
+    new_timeout_in_seconds = (
+        body.timeout_in_seconds if body.timeout_in_seconds is not None else previous_timeout_in_seconds
+    )
+    if new_timeout_in_seconds > new_interval_in_seconds:
+        return bad_request("timeout_in_seconds must not be greater than interval_in_seconds")
 
     service = g.service_repo.update_service(
         service_id,

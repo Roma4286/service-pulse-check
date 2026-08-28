@@ -21,9 +21,9 @@ CHECKERS: dict[ServiceType, BaseChecker] = {
 }
 
 @celery.task(name="check_service")
-def check_service_task(service_id: int, url: str, service_type: str):
+def check_service_task(service_id: int, url: str, service_type: str, timeout_in_seconds: float):
     checker = CHECKERS[ServiceType(service_type)]
-    status, response_time = checker.check(url)
+    status, response_time = checker.check(url, timeout_in_seconds)
     session = Session()
     try: 
         CheckResultRepository(session).create_result(
@@ -40,12 +40,12 @@ class ServiceScheduler():
     def __init__(self, celery_app: Celery):
         self.celery_app = celery_app
 
-    def create_task(self, service_id: int, url: str, service_type: ServiceType, interval_in_seconds: int):
+    def create_task(self, service_id: int, url: str, service_type: ServiceType, interval_in_seconds: int, timeout_in_seconds: float):
         entry = RedBeatSchedulerEntry(
             name=f"check_service_{service_id}",
             task="check_service",
             schedule=interval_in_seconds,
-            args=[service_id, url, service_type.value],
+            args=[service_id, url, service_type.value, timeout_in_seconds],
             options={"expires": interval_in_seconds-1},
             app=self.celery_app,
         )

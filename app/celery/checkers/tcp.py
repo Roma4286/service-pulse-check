@@ -5,15 +5,12 @@ from .base import BaseChecker
 
 
 class TcpChecker(BaseChecker):
-    def __init__(self, timeout: float = 5.0):
-        self.timeout = timeout
-
-    def check(self, url: str) -> tuple[bool, float]:
+    def check(self, url: str, timeout_in_seconds: float) -> tuple[bool, float]:
         host, port = url.rsplit(":", 1)
 
         start = time.monotonic()
         try:
-            with socket.create_connection((host, int(port)), timeout=self.timeout):
+            with socket.create_connection((host, int(port)), timeout=timeout_in_seconds):
                 status_code = True
         except OSError:
             status_code = False

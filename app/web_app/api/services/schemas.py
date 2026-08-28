@@ -12,6 +12,7 @@ class ServiceCreateSchema(BaseModel):
     url: HttpUrl
     type: ServiceType
     interval_in_seconds: int
+    timeout_in_seconds: float = 5.0
 
 
 class ServiceUpdateSchema(BaseModel):
@@ -21,6 +22,7 @@ class ServiceUpdateSchema(BaseModel):
                 "name": "my-service",
                 "is_active": True,
                 "interval_in_seconds": 60,
+                "timeout_in_seconds": 5.0,
             }
         }
     }
@@ -28,6 +30,7 @@ class ServiceUpdateSchema(BaseModel):
     name: str | None = None
     is_active: bool | None = None
     interval_in_seconds: int | None = None
+    timeout_in_seconds: float | None = None
 
 
 class ServiceSchema(BaseModel):
@@ -37,6 +40,7 @@ class ServiceSchema(BaseModel):
     type: str
     is_active: bool
     interval_in_seconds: int
+    timeout_in_seconds: float
 
 
 class ServiceListDataSchema(BaseModel):

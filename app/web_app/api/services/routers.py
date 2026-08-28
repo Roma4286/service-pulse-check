@@ -26,6 +26,7 @@ def serialize_service(service: Service) -> dict:
         "type": service.type.value,
         "is_active": service.is_active,
         "interval_in_seconds": service.interval_in_seconds,
+        "timeout_in_seconds": service.timeout_in_seconds,
     }
 
 
@@ -64,13 +65,18 @@ def create_service():
     body = request.context.body
 
     service = g.service_repo.create_new_service(
-        name=body.name, url=str(body.url), type=body.type, interval_in_seconds=body.interval_in_seconds
+        name=body.name,
+        url=str(body.url),
+        type=body.type,
+        interval_in_seconds=body.interval_in_seconds,
+        timeout_in_seconds=body.timeout_in_seconds,
     )
     current_app.extensions["scheduler"].create_task(
         service_id=service.id,
         url=str(body.url),
         service_type=body.type,
         interval_in_seconds=body.interval_in_seconds,
+        timeout_in_seconds=body.timeout_in_seconds,
     )
     return api_response(data=serialize_service(service), status_code=201)
 
@@ -86,29 +92,41 @@ def update_service(service_id):
 
     previous_is_active = service.is_active
     previous_interval_in_seconds = service.interval_in_seconds
+    previous_timeout_in_seconds = service.timeout_in_seconds
 
     service = g.service_repo.update_service(
         service_id,
         name=body.name,
         is_active=body.is_active,
         interval_in_seconds=body.interval_in_seconds,
+        timeout_in_seconds=body.timeout_in_seconds,
     )
 
     new_is_active = service.is_active
+    schedule_changed = (
+        previous_interval_in_seconds != service.interval_in_seconds
+        or previous_timeout_in_seconds != service.timeout_in_seconds
+    )
     scheduler = current_app.extensions["scheduler"]
 
     if previous_is_active and not new_is_active:
         scheduler.delete_task(service_id)
     elif not previous_is_active and new_is_active:
         scheduler.create_task(
-            service_id=service.id, url=service.url,
-            service_type=service.type, interval_in_seconds=service.interval_in_seconds,
+            service_id=service.id,
+            url=service.url,
+            service_type=service.type,
+            interval_in_seconds=service.interval_in_seconds,
+            timeout_in_seconds=service.timeout_in_seconds,
         )
-    elif new_is_active and previous_interval_in_seconds != service.interval_in_seconds:
+    elif new_is_active and schedule_changed:
         scheduler.delete_task(service_id)
         scheduler.create_task(
-            service_id=service.id, url=service.url,
-            service_type=service.type, interval_in_seconds=service.interval_in_seconds,
+            service_id=service.id,
+            url=service.url,
+            service_type=service.type,
+            interval_in_seconds=service.interval_in_seconds,
+            timeout_in_seconds=service.timeout_in_seconds,
     )
 
 

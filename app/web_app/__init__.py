@@ -1,7 +1,11 @@
-from flask import Flask
+from flask import Flask, g
 from flask_pydantic_spec import FlaskPydanticSpec
 
 from app.database import Session
+from app.repositories.service_repository import ServiceRepository
+from app.repositories.check_result_repository import CheckResultRepository
+from app.celery.celery_app import celery_app
+from app.celery.tasks import ServiceScheduler
 
 spec = FlaskPydanticSpec("flask", title="Service Pulse Check API", version="1.0.0")
 
@@ -15,6 +19,14 @@ def create_app():
     app.config["FLASK_PYDANTIC_VALIDATION_ERROR_RAISE"] = True
 
     spec.register(app)
+
+    app.extensions["scheduler"] = ServiceScheduler(celery_app)
+
+    @app.before_request
+    def inject_repositories():
+        session = Session()
+        g.service_repo = ServiceRepository(session)
+        g.check_result_repo = CheckResultRepository(session)
 
     @app.teardown_appcontext
     def remove_session(exception=None):

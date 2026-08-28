@@ -20,9 +20,9 @@ class CheckResultRepository(BaseRepository):
         self.db_session.expunge(check_result)
         return check_result
 
-    def delete_result(self, result_id: int, is_db_transaction: bool = False) -> bool:
+    def delete_result(self, result_id: int, service_id: int, is_db_transaction: bool = False) -> bool:
         result = self.db_session.get(CheckResult, result_id)
-        if result is None:
+        if result is None or result.service_id != service_id:
             return False
 
         self.db_session.delete(result)

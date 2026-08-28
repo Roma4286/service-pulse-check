@@ -158,7 +158,7 @@ def get_service_results(service_id):
 @services_bp.route('/<int:service_id>/results/<int:result_id>', methods=['DELETE'])
 @spec.validate(resp=Response("HTTP_204", "HTTP_404"), tags=["services"])
 def delete_service_result(service_id, result_id):
-    deleted = g.check_result_repo.delete_result(result_id)
+    deleted = g.check_result_repo.delete_result(result_id, service_id)
     if not deleted:
         return not_found("Result not found")
 

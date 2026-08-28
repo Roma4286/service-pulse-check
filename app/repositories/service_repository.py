@@ -1,4 +1,4 @@
-from app.models import Service, ServiceType, ServiceStatus
+from app.models import Service, ServiceType
 from .base_repository import BaseRepository
 
 class ServiceRepository(BaseRepository):
@@ -11,7 +11,7 @@ class ServiceRepository(BaseRepository):
     def get_services(self, is_active: bool | None = None) -> list[Service]:
         query = self.db_session.query(Service)
         if is_active is not None:
-            query = query.filter_by(status=ServiceStatus.ACTIVE if is_active else ServiceStatus.INACTIVE)
+            query = query.filter_by(is_active=is_active)
 
         services = query.all()
         for service in services:
@@ -19,7 +19,7 @@ class ServiceRepository(BaseRepository):
         return services
 
     def create_new_service(self, name: str, url: str, type: ServiceType, interval_in_seconds: int, is_db_transaction: bool = False) -> Service:
-        service = Service(name=name, url=url, type=type, status=ServiceStatus.ACTIVE, interval_in_seconds=interval_in_seconds)
+        service = Service(name=name, url=url, type=type, is_active=True, interval_in_seconds=interval_in_seconds)
         self.db_session.add(service)
 
         if is_db_transaction:
@@ -35,7 +35,7 @@ class ServiceRepository(BaseRepository):
                         name: str | None = None,
                         url: str | None = None,
                         type: ServiceType | None = None,
-                        status: ServiceStatus | None = None,
+                        is_active: bool | None = None,
                         interval_in_seconds: int | None = None,
                         is_db_transaction: bool = False) -> Service | None:
         service = self.db_session.get(Service, service_id)
@@ -48,8 +48,8 @@ class ServiceRepository(BaseRepository):
             service.url = url
         if type is not None:
             service.type = type
-        if status is not None:
-            service.status = status
+        if is_active is not None:
+            service.is_active = is_active
         if interval_in_seconds is not None:
             service.interval_in_seconds = interval_in_seconds
 

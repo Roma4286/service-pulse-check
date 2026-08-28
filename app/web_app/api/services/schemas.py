@@ -1,12 +1,10 @@
-from typing import Literal
-
 from pydantic import BaseModel, HttpUrl
 
-from app.models import ServiceType, ServiceStatus
+from app.models import ServiceType
 
 
 class ServiceListQuerySchema(BaseModel):
-    status: Literal["active", "inactive"] | None = None
+    is_active: bool | None = None
 
 
 class ServiceCreateSchema(BaseModel):
@@ -21,14 +19,14 @@ class ServiceUpdateSchema(BaseModel):
         "json_schema_extra": {
             "example": {
                 "name": "my-service",
-                "status": "active",
+                "is_active": True,
                 "interval_in_seconds": 60,
             }
         }
     }
 
     name: str | None = None
-    status: ServiceStatus | None = None
+    is_active: bool | None = None
     interval_in_seconds: int | None = None
 
 
@@ -37,7 +35,7 @@ class ServiceSchema(BaseModel):
     name: str
     url: str
     type: str
-    status: str
+    is_active: bool
     interval_in_seconds: int
 
 

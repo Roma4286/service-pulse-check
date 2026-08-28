@@ -3,7 +3,7 @@ from flask import Blueprint, current_app, g, request
 from flask_pydantic_spec import Response
 
 from app.web_app import spec
-from app.models import Service, CheckResult, ServiceStatus
+from app.models import Service, CheckResult
 
 from .schemas import (
     ServiceCreateSchema,
@@ -17,10 +17,6 @@ from ..responses import api_response, not_found
 
 services_bp = Blueprint('services', __name__, url_prefix='/services')
 
-STATUS_TO_IS_ACTIVE = {
-    "active": True,
-    "inactive": False,
-}
 
 def serialize_service(service: Service) -> dict:
     return {
@@ -28,7 +24,7 @@ def serialize_service(service: Service) -> dict:
         "name": service.name,
         "url": service.url,
         "type": service.type.value,
-        "status": service.status.value,
+        "is_active": service.is_active,
         "interval_in_seconds": service.interval_in_seconds,
     }
 
@@ -47,9 +43,8 @@ def serialize_check_result(check_result: CheckResult) -> dict:
 @spec.validate(query=ServiceListQuerySchema, resp=Response(HTTP_200=ServiceListResponseSchema), tags=["services"])
 def get_services():
     query = request.context.query
-    is_active = STATUS_TO_IS_ACTIVE.get(query.status) if query.status else None
 
-    services = g.service_repo.get_services(is_active=is_active)
+    services = g.service_repo.get_services(is_active=query.is_active)
     return api_response(data={"services": [serialize_service(service) for service in services]})
 
 
@@ -89,27 +84,27 @@ def update_service(service_id):
     if service is None:
         return not_found("Service not found")
 
-    previous_status = service.status
+    previous_is_active = service.is_active
     previous_interval_in_seconds = service.interval_in_seconds
 
     service = g.service_repo.update_service(
         service_id,
         name=body.name,
-        status=body.status,
+        is_active=body.is_active,
         interval_in_seconds=body.interval_in_seconds,
     )
 
-    new_status = service.status
+    new_is_active = service.is_active
     scheduler = current_app.extensions["scheduler"]
 
-    if previous_status == ServiceStatus.ACTIVE and new_status == ServiceStatus.INACTIVE:
+    if previous_is_active and not new_is_active:
         scheduler.delete_task(service_id)
-    elif previous_status == ServiceStatus.INACTIVE and new_status == ServiceStatus.ACTIVE:
+    elif not previous_is_active and new_is_active:
         scheduler.create_task(
             service_id=service.id, url=service.url,
             service_type=service.type, interval_in_seconds=service.interval_in_seconds,
         )
-    elif new_status == ServiceStatus.ACTIVE and previous_interval_in_seconds != service.interval_in_seconds:
+    elif new_is_active and previous_interval_in_seconds != service.interval_in_seconds:
         scheduler.delete_task(service_id)
         scheduler.create_task(
             service_id=service.id, url=service.url,

@@ -12,6 +12,8 @@ from .schemas import (
     ServiceResponseSchema,
     ServiceListResponseSchema,
     CheckResultListResponseSchema,
+    ServiceSchema,
+    CheckResultSchema,
 )
 from ..responses import api_response, bad_request, not_found
 
@@ -19,25 +21,11 @@ services_bp = Blueprint('services', __name__, url_prefix='/services')
 
 
 def serialize_service(service: Service) -> dict:
-    return {
-        "id": service.id,
-        "name": service.name,
-        "url": service.url,
-        "type": service.type.value,
-        "is_active": service.is_active,
-        "interval_in_seconds": service.interval_in_seconds,
-        "timeout_in_seconds": service.timeout_in_seconds,
-    }
+    return ServiceSchema.model_validate(service).model_dump(mode="json")
 
 
 def serialize_check_result(check_result: CheckResult) -> dict:
-    return {
-        "id": check_result.id,
-        "service_id": check_result.service_id,
-        "status": check_result.status.value,
-        "response_time": check_result.response_time,
-        "created_at": check_result.created_at.isoformat(),
-    }
+    return CheckResultSchema.model_validate(check_result).model_dump(mode="json")
 
 
 @services_bp.route('', methods=['GET'])

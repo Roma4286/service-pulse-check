@@ -1,6 +1,8 @@
+from datetime import datetime
+
 from pydantic import BaseModel, Field, HttpUrl, model_validator
 
-from app.models import ServiceType
+from app.models import ResultStatus, ServiceType
 
 
 class ServiceListQuerySchema(BaseModel):
@@ -40,10 +42,12 @@ class ServiceUpdateSchema(BaseModel):
 
 
 class ServiceSchema(BaseModel):
+    model_config = {"from_attributes": True}
+
     id: int
     name: str
     url: str
-    type: str
+    type: ServiceType
     is_active: bool
     interval_in_seconds: int
     timeout_in_seconds: float
@@ -54,11 +58,13 @@ class ServiceListDataSchema(BaseModel):
 
 
 class CheckResultSchema(BaseModel):
+    model_config = {"from_attributes": True}
+
     id: int
     service_id: int
-    status: str
+    status: ResultStatus
     response_time: float
-    created_at: str
+    created_at: datetime
 
 
 class CheckResultListDataSchema(BaseModel):

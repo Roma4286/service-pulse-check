@@ -14,7 +14,7 @@ class ServiceCreateSchema(BaseModel):
     url: HttpUrl
     type: ServiceType
     is_active: bool
-    interval_in_seconds: int = Field(gt=0)
+    interval_in_seconds: int = Field(default=10.0, gt=0)
     timeout_in_seconds: float = Field(default=5.0, gt=0)
 
     @model_validator(mode="after")

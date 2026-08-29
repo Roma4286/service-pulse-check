@@ -15,7 +15,10 @@ from .schemas import (
     ServiceSchema,
     CheckResultSchema,
 )
-from ..responses import api_response, bad_request, not_found
+from app.operations.create_service import CreateServiceDTO
+from app.operations.errors import ServicePersistenceError, ServiceSchedulingError
+
+from ..responses import api_response, bad_request, error_response, not_found
 
 services_bp = Blueprint('services', __name__, url_prefix='/services')
 
@@ -50,22 +53,19 @@ def get_service(service_id):
 @services_bp.route('', methods=['POST'])
 @spec.validate(body=ServiceCreateSchema, resp=Response(HTTP_201=ServiceResponseSchema), tags=["services"])
 def create_service():
-    body = request.context.body
+    body: ServiceCreateSchema = request.context.body
 
-    service = g.service_repo.create_new_service(
-        name=body.name,
-        url=str(body.url),
-        type=body.type,
-        interval_in_seconds=body.interval_in_seconds,
-        timeout_in_seconds=body.timeout_in_seconds,
-    )
-    current_app.extensions["scheduler"].create_task(
-        service_id=service.id,
-        url=str(body.url),
-        service_type=body.type,
-        interval_in_seconds=body.interval_in_seconds,
-        timeout_in_seconds=body.timeout_in_seconds,
-    )
+    try:
+        service = g.create_service(dto=CreateServiceDTO(
+            name=body.name,
+            url=str(body.url),
+            type=body.type,
+            interval_in_seconds=body.interval_in_seconds,
+            timeout_in_seconds=body.timeout_in_seconds,
+        ))
+    except (ServicePersistenceError, ServiceSchedulingError) as e:
+        return error_response(500, e.message)
+
     return api_response(data=serialize_service(service), status_code=201)
 
 

@@ -74,7 +74,9 @@ class ServiceRepository(BaseRepository):
 
         self.db_session.delete(service)
 
-        if not is_db_transaction:
+        if is_db_transaction:
+            self.db_session.flush()
+        else:
             self.db_session.commit()
 
         return True

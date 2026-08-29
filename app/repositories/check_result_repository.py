@@ -27,7 +27,9 @@ class CheckResultRepository(BaseRepository):
 
         self.db_session.delete(result)
 
-        if not is_db_transaction:
+        if is_db_transaction:
+            self.db_session.flush()
+        else:
             self.db_session.commit()
 
         return True

@@ -6,3 +6,6 @@ class BaseRepository:
 
     def db_commit(self) -> None:
         self.db_session.commit()
+
+    def db_rollback(self) -> None:
+        self.db_session.rollback()

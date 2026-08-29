@@ -7,6 +7,7 @@ from app.repositories.check_result_repository import CheckResultRepository
 from app.celery.celery_app import celery_app
 from app.celery.tasks import ServiceScheduler
 from app.operations.create_service import CreateService
+from app.operations.update_service import UpdateService
 
 spec = FlaskPydanticSpec("flask", title="Service Pulse Check API", version="1.0.0")
 
@@ -29,6 +30,10 @@ def create_app():
         g.service_repo = ServiceRepository(session)
         g.check_result_repo = CheckResultRepository(session)
         g.create_service = CreateService(
+            scheduler=app.extensions["scheduler"],
+            service_repository=g.service_repo,
+        )
+        g.update_service = UpdateService(
             scheduler=app.extensions["scheduler"],
             service_repository=g.service_repo,
         )

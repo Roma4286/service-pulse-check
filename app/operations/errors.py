@@ -7,3 +7,9 @@ class ServicePersistenceError(BaseServiceError):
 
 class ServiceSchedulingError(BaseServiceError):
     """Failed to schedule the service check."""
+
+class ServiceNotFoundError(BaseServiceError):
+    """Service not found in the database."""
+
+class TimeoutGreaterThanIntervalError(BaseServiceError):
+    """timeout_in_seconds must not be greater than interval_in_seconds."""

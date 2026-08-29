@@ -16,7 +16,8 @@ from .schemas import (
     CheckResultSchema,
 )
 from app.operations.create_service import CreateServiceDTO
-from app.operations.errors import ServicePersistenceError, ServiceSchedulingError
+from app.operations.update_service import UpdateServiceDTO
+from app.operations.errors import ServiceNotFoundError, ServicePersistenceError, ServiceSchedulingError, TimeoutGreaterThanIntervalError
 
 from ..responses import api_response, bad_request, error_response, not_found
 
@@ -74,59 +75,21 @@ def create_service():
 def update_service(service_id):
     body = request.context.body
 
-    service = g.service_repo.get_service_by_id(service_id)
-    if service is None:
-        return not_found("Service not found")
-
-    previous_is_active = service.is_active
-    previous_interval_in_seconds = service.interval_in_seconds
-    previous_timeout_in_seconds = service.timeout_in_seconds
-
-    new_interval_in_seconds = (
-        body.interval_in_seconds if body.interval_in_seconds is not None else previous_interval_in_seconds
-    )
-    new_timeout_in_seconds = (
-        body.timeout_in_seconds if body.timeout_in_seconds is not None else previous_timeout_in_seconds
-    )
-    if new_timeout_in_seconds > new_interval_in_seconds:
-        return bad_request("timeout_in_seconds must not be greater than interval_in_seconds")
-
-    service = g.service_repo.update_service(
-        service_id,
-        name=body.name,
-        is_active=body.is_active,
-        interval_in_seconds=body.interval_in_seconds,
-        timeout_in_seconds=body.timeout_in_seconds,
-    )
-
-    new_is_active = service.is_active
-    schedule_changed = (
-        previous_interval_in_seconds != service.interval_in_seconds
-        or previous_timeout_in_seconds != service.timeout_in_seconds
-    )
-    scheduler = current_app.extensions["scheduler"]
-
-    if previous_is_active and not new_is_active:
-        scheduler.delete_task(service_id)
-    elif not previous_is_active and new_is_active:
-        scheduler.create_task(
-            service_id=service.id,
-            url=service.url,
-            service_type=service.type,
-            interval_in_seconds=service.interval_in_seconds,
-            timeout_in_seconds=service.timeout_in_seconds,
-        )
-    elif new_is_active and schedule_changed:
-        scheduler.delete_task(service_id)
-        scheduler.create_task(
-            service_id=service.id,
-            url=service.url,
-            service_type=service.type,
-            interval_in_seconds=service.interval_in_seconds,
-            timeout_in_seconds=service.timeout_in_seconds,
-    )
-
-
+    try:
+        service = g.update_service(dto=UpdateServiceDTO(
+            service_id=service_id,
+            name=body.name,
+            is_active=body.is_active,
+            interval_in_seconds=body.interval_in_seconds,
+            timeout_in_seconds=body.timeout_in_seconds,
+        ))
+    except (ServicePersistenceError, ServiceSchedulingError) as e:
+        return error_response(500, e.message)
+    except ServiceNotFoundError as e:
+        return not_found(e.message)
+    except TimeoutGreaterThanIntervalError as e:
+        bad_request(e.message)
+    
     return api_response(data=serialize_service(service))
 
 

@@ -1,4 +1,4 @@
-from flask import Blueprint, current_app, g, request
+from flask import Blueprint, g, request
 
 from flask_pydantic_spec import Response
 

@@ -97,11 +97,12 @@ def update_service(service_id):
 @services_bp.route('/<int:service_id>', methods=['DELETE'])
 @spec.validate(resp=Response("HTTP_204", "HTTP_404"), tags=["services"])
 def delete_service(service_id):
-    deleted = g.service_repo.delete_service(service_id)
-    if not deleted:
-        return not_found("Service not found")
-
-    current_app.extensions["scheduler"].delete_task(service_id)
+    try:
+        g.delete_service(service_id=service_id)
+    except ServiceNotFoundError as e:
+        return not_found(e.message)
+    except ServiceSchedulingError as e:
+        return error_response(500, e.message)
 
     return api_response(status_code=204)
 

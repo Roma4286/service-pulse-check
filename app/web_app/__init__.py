@@ -8,6 +8,7 @@ from app.celery.celery_app import celery_app
 from app.celery.tasks import ServiceScheduler
 from app.operations.create_service import CreateService
 from app.operations.update_service import UpdateService
+from app.operations.delete_service import DeleteService
 
 spec = FlaskPydanticSpec("flask", title="Service Pulse Check API", version="1.0.0")
 
@@ -34,6 +35,10 @@ def create_app():
             service_repository=g.service_repo,
         )
         g.update_service = UpdateService(
+            scheduler=app.extensions["scheduler"],
+            service_repository=g.service_repo,
+        )
+        g.delete_service = DeleteService(
             scheduler=app.extensions["scheduler"],
             service_repository=g.service_repo,
         )

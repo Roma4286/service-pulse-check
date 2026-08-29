@@ -1,6 +1,14 @@
 from flask import current_app, jsonify
 from werkzeug.http import HTTP_STATUS_CODES
 from werkzeug.exceptions import HTTPException
+
+from app.operations.errors import (
+    ServiceNotFoundError,
+    ServicePersistenceError,
+    ServiceSchedulingError,
+    TimeoutGreaterThanIntervalError,
+)
+
 from . import api_bp
 
 
@@ -22,6 +30,22 @@ def not_found(message):
 @api_bp.errorhandler(HTTPException)
 def handle_exception(e):
     return error_response(e.code)
+
+
+@api_bp.errorhandler(ServiceNotFoundError)
+def handle_service_not_found_error(e):
+    return not_found(e.message)
+
+
+@api_bp.errorhandler(TimeoutGreaterThanIntervalError)
+def handle_timeout_greater_than_interval_error(e):
+    return bad_request(e.message)
+
+
+@api_bp.errorhandler(ServicePersistenceError)
+@api_bp.errorhandler(ServiceSchedulingError)
+def handle_service_error(e):
+    return error_response(500, e.message)
 
 
 @api_bp.errorhandler(Exception)

@@ -17,9 +17,8 @@ from .schemas import (
 )
 from app.operations.create_service import CreateServiceDTO
 from app.operations.update_service import UpdateServiceDTO
-from app.operations.errors import ServiceNotFoundError, ServicePersistenceError, ServiceSchedulingError, TimeoutGreaterThanIntervalError
 
-from ..responses import api_response, bad_request, error_response, not_found
+from ..responses import api_response, not_found
 
 services_bp = Blueprint('services', __name__, url_prefix='/services')
 
@@ -56,17 +55,14 @@ def get_service(service_id):
 def create_service():
     body: ServiceCreateSchema = request.context.body
 
-    try:
-        service = g.create_service(dto=CreateServiceDTO(
-            name=body.name,
-            url=str(body.url),
-            type=body.type,
-            is_active=body.is_active,
-            interval_in_seconds=body.interval_in_seconds,
-            timeout_in_seconds=body.timeout_in_seconds,
-        ))
-    except (ServicePersistenceError, ServiceSchedulingError) as e:
-        return error_response(500, e.message)
+    service = g.create_service(dto=CreateServiceDTO(
+        name=body.name,
+        url=str(body.url),
+        type=body.type,
+        is_active=body.is_active,
+        interval_in_seconds=body.interval_in_seconds,
+        timeout_in_seconds=body.timeout_in_seconds,
+    ))
 
     return api_response(data=serialize_service(service), status_code=201)
 
@@ -76,33 +72,21 @@ def create_service():
 def update_service(service_id):
     body = request.context.body
 
-    try:
-        service = g.update_service(dto=UpdateServiceDTO(
-            service_id=service_id,
-            name=body.name,
-            is_active=body.is_active,
-            interval_in_seconds=body.interval_in_seconds,
-            timeout_in_seconds=body.timeout_in_seconds,
-        ))
-    except (ServicePersistenceError, ServiceSchedulingError) as e:
-        return error_response(500, e.message)
-    except ServiceNotFoundError as e:
-        return not_found(e.message)
-    except TimeoutGreaterThanIntervalError as e:
-        return bad_request(e.message)
-    
+    service = g.update_service(dto=UpdateServiceDTO(
+        service_id=service_id,
+        name=body.name,
+        is_active=body.is_active,
+        interval_in_seconds=body.interval_in_seconds,
+        timeout_in_seconds=body.timeout_in_seconds,
+    ))
+
     return api_response(data=serialize_service(service))
 
 
 @services_bp.route('/<int:service_id>', methods=['DELETE'])
 @spec.validate(resp=Response("HTTP_204", "HTTP_404"), tags=["services"])
 def delete_service(service_id):
-    try:
-        g.delete_service(service_id=service_id)
-    except ServiceNotFoundError as e:
-        return not_found(e.message)
-    except ServiceSchedulingError as e:
-        return error_response(500, e.message)
+    g.delete_service(service_id=service_id)
 
     return api_response(status_code=204)
 

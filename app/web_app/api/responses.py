@@ -1,4 +1,4 @@
-from flask import jsonify
+from flask import current_app, jsonify
 from werkzeug.http import HTTP_STATUS_CODES
 from werkzeug.exceptions import HTTPException
 from . import api_bp
@@ -22,6 +22,12 @@ def not_found(message):
 @api_bp.errorhandler(HTTPException)
 def handle_exception(e):
     return error_response(e.code)
+
+
+@api_bp.errorhandler(Exception)
+def handle_unexpected_exception(e):
+    current_app.logger.exception(e)
+    return error_response(500, "Internal server error")
 
 
 def reformat_spec_validation_error(req, resp, req_validation_error, instance):

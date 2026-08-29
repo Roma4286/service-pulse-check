@@ -13,6 +13,7 @@ class ServiceCreateSchema(BaseModel):
     name: str
     url: HttpUrl
     type: ServiceType
+    is_active: bool
     interval_in_seconds: int = Field(gt=0)
     timeout_in_seconds: float = Field(default=5.0, gt=0)
 

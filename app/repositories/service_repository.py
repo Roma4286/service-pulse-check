@@ -18,9 +18,9 @@ class ServiceRepository(BaseRepository):
             self.db_session.expunge(service)
         return services
 
-    def create_new_service(self, name: str, url: str, type: ServiceType, interval_in_seconds: int, timeout_in_seconds: float, is_db_transaction: bool = False) -> Service:
+    def create_new_service(self, name: str, url: str, type: ServiceType, is_active: bool, interval_in_seconds: int, timeout_in_seconds: float, is_db_transaction: bool = False) -> Service:
         service = Service(
-            name=name, url=url, type=type, is_active=True,
+            name=name, url=url, type=type, is_active=is_active,
             interval_in_seconds=interval_in_seconds, timeout_in_seconds=timeout_in_seconds,
         )
         self.db_session.add(service)

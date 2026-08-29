@@ -12,6 +12,7 @@ class CreateServiceDTO:
     name: str
     url: str
     type: ServiceType
+    is_active: bool
     interval_in_seconds: int
     timeout_in_seconds: float
 
@@ -27,6 +28,7 @@ class CreateService:
                 name=dto.name,
                 url=dto.url,
                 type=dto.type,
+                is_active=dto.is_active,
                 interval_in_seconds=dto.interval_in_seconds,
                 timeout_in_seconds=dto.timeout_in_seconds,
                 is_db_transaction=True,
@@ -34,18 +36,19 @@ class CreateService:
         except Exception as e:
             raise ServicePersistenceError(name=dto.name, url=dto.url) from e
 
-        try:
-            self.scheduler.create_task(
-                service_id=service.id,
-                url=dto.url,
-                service_type=dto.type,
-                interval_in_seconds=dto.interval_in_seconds,
-                timeout_in_seconds=dto.timeout_in_seconds,
-            )
-        except Exception as e:
-            self.service_repository.db_rollback()
-            raise ServiceSchedulingError(service_id=service.id) from e
-        else:
-            self.service_repository.db_commit()
+        if dto.is_active:
+            try:
+                self.scheduler.create_task(
+                    service_id=service.id,
+                    url=dto.url,
+                    service_type=dto.type,
+                    interval_in_seconds=dto.interval_in_seconds,
+                    timeout_in_seconds=dto.timeout_in_seconds,
+                )
+            except Exception as e:
+                self.service_repository.db_rollback()
+                raise ServiceSchedulingError(service_id=service.id) from e
+
+        self.service_repository.db_commit()
 
         return service

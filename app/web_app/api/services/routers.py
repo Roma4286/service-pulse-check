@@ -61,6 +61,7 @@ def create_service():
             name=body.name,
             url=str(body.url),
             type=body.type,
+            is_active=body.is_active,
             interval_in_seconds=body.interval_in_seconds,
             timeout_in_seconds=body.timeout_in_seconds,
         ))

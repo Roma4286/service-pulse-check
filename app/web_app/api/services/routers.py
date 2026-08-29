@@ -89,7 +89,7 @@ def update_service(service_id):
     except ServiceNotFoundError as e:
         return not_found(e.message)
     except TimeoutGreaterThanIntervalError as e:
-        bad_request(e.message)
+        return bad_request(e.message)
     
     return api_response(data=serialize_service(service))
 

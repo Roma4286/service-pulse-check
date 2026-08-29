@@ -5,4 +5,4 @@ from .config import settings
 
 engine = create_engine(settings.pg_url, echo=False)
 
-Session = scoped_session(sessionmaker(bind=engine, expire_on_commit=False))
+Session = scoped_session(sessionmaker(bind=engine, expire_on_commit=False, pool_pre_ping=True))

@@ -39,5 +39,7 @@ class CheckResultRepository(BaseRepository):
 
         if not is_db_transaction:
             self.db_session.commit()
+        else:
+            self.db_session.commit()
 
         return deleted

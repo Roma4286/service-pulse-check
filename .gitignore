@@ -13,3 +13,5 @@ __pycache__/
 .ruff_cache/
 .cache/
 *.egg-info/
+
+.claude

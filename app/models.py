@@ -20,12 +20,12 @@ class ResultStatus(enum.Enum):
 class User(Base):
     __tablename__ = "users"
 
-    def __init__(self, name: str, password: str):
-        self.name = name
+    def __init__(self, username: str, password: str):
+        self.username = username
         self.password_hash = hash_password(password)
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(unique=True)
+    username: Mapped[str] = mapped_column(unique=True)
     password_hash : Mapped[str] = mapped_column()
 
     services: Mapped[list["Service"]] = relationship("Service", back_populates="user", cascade="all, delete-orphan")
@@ -63,3 +63,7 @@ class CheckResult(Base):
 
     response_time: Mapped[float] = mapped_column()
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+
+    __table_args__ = (
+        Index("ix_check_results_service_id", "service_id"),
+    )

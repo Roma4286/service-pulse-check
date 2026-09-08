@@ -29,7 +29,7 @@ def create_app():
     app.extensions["scheduler"] = ServiceScheduler(celery_app)
 
     @app.before_request
-    def inject_repositories():
+    def inject_dependencies():
         session = Session()
         g.service_repo = ServiceRepository(session)
         g.check_result_repo = CheckResultRepository(session)

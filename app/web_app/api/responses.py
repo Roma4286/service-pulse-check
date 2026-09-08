@@ -1,6 +1,8 @@
 from flask import current_app, jsonify
 from werkzeug.http import HTTP_STATUS_CODES
 from werkzeug.exceptions import HTTPException
+from flask_jwt_extended.exceptions import JWTExtendedException
+from jwt.exceptions import PyJWTError
 
 from app.operations.errors import (
     ServiceNotFoundError,
@@ -27,6 +29,10 @@ def not_found(message):
     return error_response(404, message)
 
 
+def unauthorized(message):
+    return error_response(401, message)
+
+
 @api_bp.errorhandler(HTTPException)
 def handle_exception(e):
     return error_response(e.code)
@@ -46,6 +52,12 @@ def handle_timeout_greater_than_interval_error(e):
 @api_bp.errorhandler(ServiceSchedulingError)
 def handle_service_error(e):
     return error_response(500, e.message)
+
+
+@api_bp.errorhandler(JWTExtendedException)
+@api_bp.errorhandler(PyJWTError)
+def handle_jwt_error(e):
+    return unauthorized(str(e))
 
 
 @api_bp.errorhandler(Exception)

@@ -1,6 +1,9 @@
+from datetime import timedelta
 from flask import Flask, g
+from flask_jwt_extended import JWTManager
 from flask_pydantic_spec import FlaskPydanticSpec
 
+from app.config import settings
 from app.database import Session
 from app.repositories.service_repository import ServiceRepository
 from app.repositories.check_result_repository import CheckResultRepository
@@ -16,13 +19,17 @@ from app.web_app.api.responses import reformat_spec_validation_error  # noqa: E4
 
 spec.before = reformat_spec_validation_error
 
+jwt = JWTManager()
 
 def create_app():
     app = Flask(__name__)
     app.config["FLASK_PYDANTIC_VALIDATION_ERROR_RAISE"] = True
+    app.config["JWT_SECRET_KEY"] = settings.jwt_secret_key
+    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=settings.jwt_access_token_expires_in_hours)
 
     spec.register(app)
-
+    jwt.init_app(app)
+    
     app.extensions["scheduler"] = ServiceScheduler(celery_app)
 
     @app.before_request

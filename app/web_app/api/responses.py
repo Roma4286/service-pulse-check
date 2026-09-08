@@ -14,22 +14,22 @@ from app.operations.errors import (
 from . import api_bp
 
 
-def error_response(status_code, message=None):
+def error_response(status_code: int, message: str | None = None):
     payload = {'error': HTTP_STATUS_CODES.get(status_code, 'Unknown error')}
     if message:
         payload['message'] = message
     return payload, status_code
 
 
-def bad_request(message):
+def bad_request(message: str | None = None):
     return error_response(400, message)
 
 
-def not_found(message):
+def not_found(message: str | None = None):
     return error_response(404, message)
 
 
-def unauthorized(message):
+def unauthorized(message: str | None = None):
     return error_response(401, message)
 
 

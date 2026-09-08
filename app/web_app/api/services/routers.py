@@ -1,8 +1,9 @@
 from flask import Blueprint, g, request
 
+from flask_jwt_extended import get_jwt_identity
 from flask_pydantic_spec import Response
 
-from app.web_app import spec
+from app.web_app.extensions import protected, spec
 from app.models import Service, CheckResult
 
 from .schemas import (
@@ -32,6 +33,7 @@ def serialize_check_result(check_result: CheckResult) -> dict:
 
 
 @services_bp.route('', methods=['GET'])
+@protected
 @spec.validate(query=ServiceListQuerySchema, resp=Response(HTTP_200=ServiceListResponseSchema), tags=["services"])
 def get_services():
     query = request.context.query
@@ -41,6 +43,7 @@ def get_services():
 
 
 @services_bp.route('/<int:service_id>', methods=['GET'])
+@protected
 @spec.validate(resp=Response("HTTP_404", HTTP_200=ServiceResponseSchema), tags=["services"])
 def get_service(service_id):
     service = g.service_repo.get_service_by_id(service_id)
@@ -51,6 +54,7 @@ def get_service(service_id):
 
 
 @services_bp.route('', methods=['POST'])
+@protected
 @spec.validate(body=ServiceCreateSchema, resp=Response(HTTP_201=ServiceResponseSchema), tags=["services"])
 def create_service():
     body: ServiceCreateSchema = request.context.body
@@ -60,6 +64,7 @@ def create_service():
         url=str(body.url),
         type=body.type,
         is_active=body.is_active,
+        user_id=int(get_jwt_identity()),
         interval_in_seconds=body.interval_in_seconds,
         timeout_in_seconds=body.timeout_in_seconds,
     ))
@@ -68,6 +73,7 @@ def create_service():
 
 
 @services_bp.route('/<int:service_id>', methods=['PATCH'])
+@protected
 @spec.validate(body=ServiceUpdateSchema, resp=Response("HTTP_404", HTTP_200=ServiceResponseSchema), tags=["services"])
 def update_service(service_id):
     body = request.context.body
@@ -84,6 +90,7 @@ def update_service(service_id):
 
 
 @services_bp.route('/<int:service_id>', methods=['DELETE'])
+@protected
 @spec.validate(resp=Response("HTTP_204", "HTTP_404"), tags=["services"])
 def delete_service(service_id):
     g.delete_service(service_id=service_id)
@@ -91,6 +98,7 @@ def delete_service(service_id):
     return api_response(status_code=204)
 
 @services_bp.route('/<int:service_id>/results', methods=['GET'])
+@protected
 @spec.validate(resp=Response("HTTP_404", HTTP_200=CheckResultListResponseSchema), tags=["services"])
 def get_service_results(service_id):
     service = g.service_repo.get_service_by_id(service_id)
@@ -102,6 +110,7 @@ def get_service_results(service_id):
 
 
 @services_bp.route('/<int:service_id>/results/<int:result_id>', methods=['DELETE'])
+@protected
 @spec.validate(resp=Response("HTTP_204", "HTTP_404"), tags=["services"])
 def delete_service_result(service_id, result_id):
     deleted = g.check_result_repo.delete_result(result_id, service_id)
@@ -112,6 +121,7 @@ def delete_service_result(service_id, result_id):
 
 
 @services_bp.route('/<int:service_id>/results', methods=['DELETE'])
+@protected
 @spec.validate(resp=Response("HTTP_204", "HTTP_404"), tags=["services"])
 def delete_service_results(service_id):
     service = g.service_repo.get_service_by_id(service_id)

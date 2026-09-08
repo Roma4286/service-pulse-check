@@ -1,25 +1,21 @@
 from datetime import timedelta
 from flask import Flask, g
-from flask_jwt_extended import JWTManager
-from flask_pydantic_spec import FlaskPydanticSpec
 
 from app.config import settings
 from app.database import Session
 from app.repositories.service_repository import ServiceRepository
 from app.repositories.check_result_repository import CheckResultRepository
+from app.repositories.user_repository import UserRepository
 from app.celery.celery_app import celery_app
 from app.celery.tasks import ServiceScheduler
 from app.operations.create_service import CreateService
 from app.operations.update_service import UpdateService
 from app.operations.delete_service import DeleteService
-
-spec = FlaskPydanticSpec("flask", title="Service Pulse Check API", version="1.0.0")
-
-from app.web_app.api.responses import reformat_spec_validation_error  # noqa: E402
+from app.web_app.extensions import jwt, spec
+from app.web_app.api.responses import reformat_spec_validation_error
 
 spec.before = reformat_spec_validation_error
 
-jwt = JWTManager()
 
 def create_app():
     app = Flask(__name__)
@@ -29,7 +25,7 @@ def create_app():
 
     spec.register(app)
     jwt.init_app(app)
-    
+
     app.extensions["scheduler"] = ServiceScheduler(celery_app)
 
     @app.before_request
@@ -37,6 +33,7 @@ def create_app():
         session = Session()
         g.service_repo = ServiceRepository(session)
         g.check_result_repo = CheckResultRepository(session)
+        g.user_repo = UserRepository(session)
         g.create_service = CreateService(
             scheduler=app.extensions["scheduler"],
             service_repository=g.service_repo,

@@ -3,6 +3,6 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 
 from .config import settings
 
-engine = create_engine(settings.pg_url, echo=False)
+engine = create_engine(settings.pg_url, echo=False, pool_pre_ping=True)
 
-Session = scoped_session(sessionmaker(bind=engine, expire_on_commit=False, pool_pre_ping=True))
+Session = scoped_session(sessionmaker(bind=engine, expire_on_commit=False))

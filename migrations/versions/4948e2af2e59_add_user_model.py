@@ -32,13 +32,16 @@ def upgrade():
     sa.UniqueConstraint('name')
     )
 
-    op.bulk_insert(users_table, [{
-        'name': 'Roman',
-        'password_hash': '$argon2id$v=19$m=19456,t=2,p=1$+6dwPiLMmmABrHCMM6mRkw$F2f1KDmGHi0g14FEHlN/hRipMEOtgMmfSjIVaL5pgTc',
-    }])
-
     op.add_column('services', sa.Column('user_id', sa.Integer(), nullable=True))
-    op.execute("UPDATE services SET user_id = (SELECT id FROM users WHERE name = 'Roman')")
+
+    has_services = op.get_bind().execute(sa.text("SELECT EXISTS (SELECT 1 FROM services)")).scalar()
+    if has_services:
+        op.bulk_insert(users_table, [{
+            'name': 'Roman',
+            'password_hash': '$argon2id$v=19$m=19456,t=2,p=1$+6dwPiLMmmABrHCMM6mRkw$F2f1KDmGHi0g14FEHlN/hRipMEOtgMmfSjIVaL5pgTc',
+        }])
+        op.execute("UPDATE services SET user_id = (SELECT id FROM users WHERE name = 'Roman')")
+
     op.alter_column('services', 'user_id', existing_type=sa.Integer(), nullable=False)
 
     op.create_foreign_key('fk_services_user_id', 'services', 'users', ['user_id'], ['id'], ondelete='CASCADE')

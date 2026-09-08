@@ -13,6 +13,7 @@ class CreateServiceDTO:
     url: str
     type: ServiceType
     is_active: bool
+    user_id: int
     interval_in_seconds: int
     timeout_in_seconds: float
 
@@ -29,6 +30,7 @@ class CreateService:
                 url=dto.url,
                 type=dto.type,
                 is_active=dto.is_active,
+                user_id=dto.user_id,
                 interval_in_seconds=dto.interval_in_seconds,
                 timeout_in_seconds=dto.timeout_in_seconds,
                 is_db_transaction=True,

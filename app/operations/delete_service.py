@@ -9,21 +9,26 @@ from .errors import (
     ServiceSchedulingError,
 )
 
+@dataclass(frozen=True, slots=True)
+class DeleteServiceDTO:
+    user_id: int
+    service_id: int
+
 @dataclass(kw_only=True, slots=True)
 class DeleteService:
     scheduler: ServiceScheduler
     service_repository: ServiceRepository
 
-    def __call__(self, *, service_id) -> Service:
-        deleted = self.service_repository.delete_service(service_id, is_db_transaction=True)
+    def __call__(self, *, dto: DeleteServiceDTO) -> Service:
+        deleted = self.service_repository.delete_service(dto.user_id, dto.service_id, is_db_transaction=True)
         if not deleted:
-            raise ServiceNotFoundError(message=f"Service with id={service_id} not found in the database")
+            raise ServiceNotFoundError(message=f"Service with id={dto.service_id} not found in the database")
 
         try:
-            self.scheduler.delete_task(service_id)
+            self.scheduler.delete_task(dto.service_id)
         except Exception as e:
             self.service_repository.db_rollback()
-            raise ServiceSchedulingError(service_id=service_id) from e
+            raise ServiceSchedulingError(service_id=dto.service_id) from e
 
         self.service_repository.db_commit()
 

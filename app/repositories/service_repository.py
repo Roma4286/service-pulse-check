@@ -2,17 +2,19 @@ from app.models import Service, ServiceType
 from .base_repository import BaseRepository
 
 class ServiceRepository(BaseRepository):
-    def get_service_by_id(self, service_id: int) -> Service | None:
-        service = self.db_session.get(Service, service_id)
+    def get_service_by_id(self, user_id: int, service_id: int) -> Service | None:
+        service = self.db_session.query(Service).filter_by(id=service_id, user_id=user_id).first()
+        
         if service is not None:
             self.db_session.expunge(service)
         return service
 
-    def get_services(self, is_active: bool | None = None) -> list[Service]:
+    def get_services(self, user_id: int, is_active: bool | None = None) -> list[Service]:
         query = self.db_session.query(Service)
         if is_active is not None:
             query = query.filter_by(is_active=is_active)
 
+        query = query.filter_by(user_id=user_id)
         services = query.all()
         for service in services:
             self.db_session.expunge(service)
@@ -35,6 +37,7 @@ class ServiceRepository(BaseRepository):
 
     def update_service(self,
                         service_id: int,
+                        user_id: int,
                         name: str | None = None,
                         url: str | None = None,
                         type: ServiceType | None = None,
@@ -42,7 +45,7 @@ class ServiceRepository(BaseRepository):
                         interval_in_seconds: int | None = None,
                         timeout_in_seconds: float | None = None,
                         is_db_transaction: bool = False) -> Service | None:
-        service = self.db_session.get(Service, service_id)
+        service = self.db_session.query(Service).filter_by(id=service_id, user_id=user_id).first()
         if service is None:
             return None
 
@@ -67,8 +70,8 @@ class ServiceRepository(BaseRepository):
         self.db_session.expunge(service)
         return service
 
-    def delete_service(self, service_id: int, is_db_transaction: bool = False) -> bool:
-        service = self.db_session.get(Service, service_id)
+    def delete_service(self, user_id: int, service_id: int, is_db_transaction: bool = False) -> bool:
+        service = self.db_session.query(Service).filter_by(id=service_id, user_id=user_id).first()
         if service is None:
             return False
 

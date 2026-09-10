@@ -18,6 +18,7 @@ from .schemas import (
 )
 from app.operations.create_service import CreateServiceDTO
 from app.operations.update_service import UpdateServiceDTO
+from app.operations.delete_service import DeleteServiceDTO
 
 from ..responses import api_response, not_found
 
@@ -38,7 +39,7 @@ def serialize_check_result(check_result: CheckResult) -> dict:
 def get_services():
     query = request.context.query
 
-    services = g.service_repo.get_services(is_active=query.is_active)
+    services = g.service_repo.get_services(user_id=int(get_jwt_identity()), is_active=query.is_active)
     return api_response(data={"services": [serialize_service(service) for service in services]})
 
 
@@ -46,7 +47,7 @@ def get_services():
 @protected
 @spec.validate(resp=Response("HTTP_404", HTTP_200=ServiceResponseSchema), tags=["services"])
 def get_service(service_id):
-    service = g.service_repo.get_service_by_id(service_id)
+    service = g.service_repo.get_service_by_id(service_id=service_id, user_id=int(get_jwt_identity()))
     if service is None:
         return not_found("Service not found")
 
@@ -80,6 +81,7 @@ def update_service(service_id):
 
     service = g.update_service(dto=UpdateServiceDTO(
         service_id=service_id,
+        user_id=int(get_jwt_identity()),
         name=body.name,
         is_active=body.is_active,
         interval_in_seconds=body.interval_in_seconds,
@@ -93,7 +95,10 @@ def update_service(service_id):
 @protected
 @spec.validate(resp=Response("HTTP_204", "HTTP_404"), tags=["services"])
 def delete_service(service_id):
-    g.delete_service(service_id=service_id)
+    g.delete_service(dto=DeleteServiceDTO(
+        service_id=service_id,
+        user_id=int(get_jwt_identity())
+    ))
 
     return api_response(status_code=204)
 
@@ -101,7 +106,7 @@ def delete_service(service_id):
 @protected
 @spec.validate(resp=Response("HTTP_404", HTTP_200=CheckResultListResponseSchema), tags=["services"])
 def get_service_results(service_id):
-    service = g.service_repo.get_service_by_id(service_id)
+    service = g.service_repo.get_service_by_id(service_id=service_id, user_id=int(get_jwt_identity()))
     if service is None:
         return not_found("Service not found")
 
@@ -113,6 +118,10 @@ def get_service_results(service_id):
 @protected
 @spec.validate(resp=Response("HTTP_204", "HTTP_404"), tags=["services"])
 def delete_service_result(service_id, result_id):
+    service = g.service_repo.get_service_by_id(service_id=service_id, user_id=int(get_jwt_identity()))
+    if service is None:
+        return not_found("Service not found")
+
     deleted = g.check_result_repo.delete_result(result_id, service_id)
     if not deleted:
         return not_found("Result not found")
@@ -124,7 +133,7 @@ def delete_service_result(service_id, result_id):
 @protected
 @spec.validate(resp=Response("HTTP_204", "HTTP_404"), tags=["services"])
 def delete_service_results(service_id):
-    service = g.service_repo.get_service_by_id(service_id)
+    service = g.service_repo.get_service_by_id(service_id=service_id, user_id=int(get_jwt_identity()))
     if service is None:
         return not_found("Service not found")
 

@@ -15,6 +15,7 @@ from .errors import (
 class UpdateServiceDTO:
     service_id: int
     name: str | None
+    user_id: int
     is_active: bool | None
     interval_in_seconds: int | None
     timeout_in_seconds: float | None
@@ -26,7 +27,7 @@ class UpdateService:
     service_repository: ServiceRepository
 
     def __call__(self, *, dto: UpdateServiceDTO) -> Service:
-        service = self.service_repository.get_service_by_id(dto.service_id)
+        service = self.service_repository.get_service_by_id(dto.user_id, dto.service_id)
 
         if service is None:
             raise ServiceNotFoundError(message=f"Service with id={dto.service_id} not found in the database")
@@ -49,6 +50,7 @@ class UpdateService:
         try:
             service = self.service_repository.update_service(
                 service_id=dto.service_id,
+                user_id=dto.user_id,
                 name=dto.name,
                 is_active=dto.is_active,
                 interval_in_seconds=dto.interval_in_seconds,

@@ -21,8 +21,8 @@ class CheckResultRepository(BaseRepository):
         return check_result
 
     def delete_result(self, result_id: int, service_id: int, is_db_transaction: bool = False) -> bool:
-        result = self.db_session.get(CheckResult, result_id)
-        if result is None or result.service_id != service_id:
+        result = self.db_session.query(CheckResult).filter_by(id=result_id, service_id=service_id).first()
+        if result is None:
             return False
 
         self.db_session.delete(result)
@@ -37,8 +37,8 @@ class CheckResultRepository(BaseRepository):
     def delete_results_by_service_id(self, service_id: int, is_db_transaction: bool = False) -> int:
         deleted = self.db_session.query(CheckResult).filter_by(service_id=service_id).delete()
 
-        if not is_db_transaction:
-            self.db_session.commit()
+        if is_db_transaction:
+            self.db_session.flush()
         else:
             self.db_session.commit()
 

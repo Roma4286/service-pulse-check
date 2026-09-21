@@ -54,7 +54,7 @@ def get_service(service_id):
 
     service = service_repo.get_service_by_id(service_id=service_id, user_id=int(get_jwt_identity()))
     if service is None:
-        return not_found("Service not found")
+        return not_found(f"Service with id={service_id} not found in the database")
 
     return api_response(data=serialize_service(service))
 
@@ -120,7 +120,7 @@ def get_service_results(service_id):
 
     service = service_repo.get_service_by_id(service_id=service_id, user_id=int(get_jwt_identity()))
     if service is None:
-        return not_found("Service not found")
+        return not_found(f"Service with id={service_id} not found in the database")
 
     results = check_result_repo.get_result_by_service_id(service_id)
     return api_response(data={"results": [serialize_check_result(result) for result in results]})
@@ -135,11 +135,11 @@ def delete_service_result(service_id, result_id):
 
     service = service_repo.get_service_by_id(service_id=service_id, user_id=int(get_jwt_identity()))
     if service is None:
-        return not_found("Service not found")
+        return not_found(f"Service with id={service_id} not found in the database")
 
     deleted = check_result_repo.delete_result(result_id, service_id)
     if not deleted:
-        return not_found("Result not found")
+        return not_found(f"Result with id={result_id} not found for service with id={service_id}")
 
     return api_response(status_code=204)
 
@@ -153,7 +153,7 @@ def delete_service_results(service_id):
 
     service = service_repo.get_service_by_id(service_id=service_id, user_id=int(get_jwt_identity()))
     if service is None:
-        return not_found("Service not found")
+        return not_found(f"Service with id={service_id} not found in the database")
 
     check_result_repo.delete_results_by_service_id(service_id)
     return api_response(status_code=204)

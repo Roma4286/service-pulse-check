@@ -9,6 +9,8 @@ from app.operations.errors import (
     ServicePersistenceError,
     ServiceSchedulingError,
     TimeoutGreaterThanIntervalError,
+    UsernameAlreadyTakenError,
+    UserPersistenceError,
 )
 
 from . import api_bp
@@ -17,8 +19,10 @@ from .responses import error_response, unauthorized
 SERVICE_ERROR_STATUS_CODES: dict[type[BaseServiceError], int] = {
     ServiceNotFoundError: 404,
     TimeoutGreaterThanIntervalError: 400,
+    UsernameAlreadyTakenError: 409,
     ServicePersistenceError: 500,
     ServiceSchedulingError: 500,
+    UserPersistenceError: 500,
 }
 
 

@@ -11,6 +11,7 @@ from app.celery.tasks import ServiceScheduler
 from app.operations.create_service import CreateService
 from app.operations.update_service import UpdateService
 from app.operations.delete_service import DeleteService
+from app.operations.register_user import RegisterUser
 from app.web_app.extensions import jwt, spec
 from app.web_app.api.error_handlers import reformat_spec_validation_error
 
@@ -46,6 +47,7 @@ def create_app():
             scheduler=app.extensions["scheduler"],
             service_repository=g.service_repo,
         )
+        g.register_user = RegisterUser(user_repository=g.user_repo)
 
     @app.teardown_appcontext
     def remove_session(exception=None):

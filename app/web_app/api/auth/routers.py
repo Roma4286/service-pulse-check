@@ -4,10 +4,11 @@ from flask_jwt_extended import create_access_token
 from flask_pydantic_spec import Response
 
 from app.models import User
+from app.operations.register_user import RegisterUserDTO
 from app.web_app.extensions import spec
 
 from .schemas import TokenResponseSchema, UserSchema, UserResponseSchema
-from ..responses import api_response, error_response, unauthorized
+from ..responses import api_response, unauthorized
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -16,11 +17,7 @@ auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 def register():
     body: UserSchema = request.context.body
 
-    try:
-        user: User = g.user_repo.create_new_user(username=body.username, password=body.password)
-    except Exception:
-        g.user_repo.db_rollback()
-        return error_response(409, "Username is already taken")
+    user: User = g.register_user(dto=RegisterUserDTO(username=body.username, password=body.password))
 
     return api_response(data={"username": user.username}, status_code=201)
 

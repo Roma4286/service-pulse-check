@@ -12,7 +12,7 @@ from app.operations.create_service import CreateService
 from app.operations.update_service import UpdateService
 from app.operations.delete_service import DeleteService
 from app.web_app.extensions import jwt, spec
-from app.web_app.api.responses import reformat_spec_validation_error
+from app.web_app.api.error_handlers import reformat_spec_validation_error
 
 spec.before = reformat_spec_validation_error
 

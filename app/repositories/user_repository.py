@@ -19,10 +19,8 @@ class UserRepository(BaseRepository):
     def create_new_user(self, username: str, password: str, is_db_transaction: bool = False) -> User:
         user = User(username=username, password=password)
         self.db_session.add(user)
-        if is_db_transaction:
-            self.db_session.flush()
-        else:
-            self.db_session.commit()
+
+        self.db_flush_or_commit(is_db_transaction)
 
         self.db_session.expunge(user)
         return user

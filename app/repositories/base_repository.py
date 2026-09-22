@@ -7,5 +7,11 @@ class BaseRepository:
     def db_commit(self) -> None:
         self.db_session.commit()
 
+    def db_flush_or_commit(self, is_db_transaction: bool) -> None:
+        if is_db_transaction:
+            self.db_session.flush()
+        else:
+            self.db_commit()
+
     def db_rollback(self) -> None:
         self.db_session.rollback()

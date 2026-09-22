@@ -12,10 +12,7 @@ class CheckResultRepository(BaseRepository):
         check_result = CheckResult(service_id=service_id, status=status, response_time=response_time)
         self.db_session.add(check_result)
 
-        if is_db_transaction:
-            self.db_session.flush()
-        else:
-            self.db_session.commit()
+        self.db_flush_or_commit(is_db_transaction)
 
         self.db_session.expunge(check_result)
         return check_result
@@ -27,19 +24,13 @@ class CheckResultRepository(BaseRepository):
 
         self.db_session.delete(result)
 
-        if is_db_transaction:
-            self.db_session.flush()
-        else:
-            self.db_session.commit()
+        self.db_flush_or_commit(is_db_transaction)
 
         return True
 
     def delete_results_by_service_id(self, service_id: int, is_db_transaction: bool = False) -> int:
         deleted = self.db_session.query(CheckResult).filter_by(service_id=service_id).delete()
 
-        if is_db_transaction:
-            self.db_session.flush()
-        else:
-            self.db_session.commit()
+        self.db_flush_or_commit(is_db_transaction)
 
         return deleted

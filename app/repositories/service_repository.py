@@ -27,10 +27,7 @@ class ServiceRepository(BaseRepository):
         )
         self.db_session.add(service)
 
-        if is_db_transaction:
-            self.db_session.flush()
-        else:
-            self.db_session.commit()
+        self.db_flush_or_commit(is_db_transaction)
 
         self.db_session.expunge(service)
         return service
@@ -62,10 +59,7 @@ class ServiceRepository(BaseRepository):
         if timeout_in_seconds is not None:
             service.timeout_in_seconds = timeout_in_seconds
 
-        if is_db_transaction:
-            self.db_session.flush()
-        else:
-            self.db_session.commit()
+        self.db_flush_or_commit(is_db_transaction)
 
         self.db_session.expunge(service)
         return service
@@ -77,9 +71,6 @@ class ServiceRepository(BaseRepository):
 
         self.db_session.delete(service)
 
-        if is_db_transaction:
-            self.db_session.flush()
-        else:
-            self.db_session.commit()
+        self.db_flush_or_commit(is_db_transaction)
 
         return True

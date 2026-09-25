@@ -6,12 +6,8 @@ from pydantic.v1 import BaseSettings
 
 ENV_PATH = Path(__file__).resolve().parent.parent / ".env"
 
-if not ENV_PATH.is_file():
-    raise RuntimeError(
-        f".env file not found at {ENV_PATH}. Copy .env.example to .env and fill in the values."
-    )
-
-load_dotenv(dotenv_path=ENV_PATH)
+if ENV_PATH.is_file():
+    load_dotenv(dotenv_path=ENV_PATH)
 
 REQUIRED_ENV_VARS = (
     "POSTGRES_HOST",
@@ -27,7 +23,7 @@ REQUIRED_ENV_VARS = (
 missing_env_vars = [name for name in REQUIRED_ENV_VARS if not os.getenv(name)]
 if missing_env_vars:
     raise RuntimeError(
-        f"Missing required environment variables in {ENV_PATH}: {', '.join(missing_env_vars)}"
+        f"Missing required environment variables: {', '.join(missing_env_vars)}. "
     )
 
 PG_HOST = os.getenv('POSTGRES_HOST')

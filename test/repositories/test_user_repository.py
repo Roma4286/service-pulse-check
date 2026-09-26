@@ -15,6 +15,7 @@ def test_create_new_user_persists_user(session):
     assert user.username == "alice"
     assert user.password_hash != "secret"
     assert user.check_password("secret")
+    assert not user.check_password("wrong")
     assert session.query(User).filter_by(username="alice").count() == 1
 
 

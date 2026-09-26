@@ -9,7 +9,6 @@ from app.models import Base
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL", "sqlite+pysqlite:///:memory:")
 
-
 @pytest.fixture(scope="session")
 def engine():
     if TEST_DATABASE_URL.startswith("sqlite"):
@@ -18,7 +17,10 @@ def engine():
             poolclass=StaticPool,
             connect_args={"check_same_thread": False},
         )
-        event.listen(engine, "connect", lambda conn, _: conn.execute("PRAGMA foreign_keys=ON"))
+
+        @event.listens_for(engine, "connect")
+        def _sqlite_connect(dbapi_connection, connection_record):
+            dbapi_connection.execute("PRAGMA foreign_keys=ON")
     else:
         engine = create_engine(TEST_DATABASE_URL)
 
@@ -29,16 +31,9 @@ def engine():
 
 @pytest.fixture
 def session(engine):
-    connection = engine.connect()
-    transaction = connection.begin()
-    session = Session(
-        bind=connection,
-        join_transaction_mode="create_savepoint",
-        expire_on_commit=False,
-    )
-
+    session = Session(engine, expire_on_commit=False)
     yield session
-
     session.close()
-    transaction.rollback()
-    connection.close()
+    with engine.begin() as conn:
+        for table in reversed(Base.metadata.sorted_tables):
+            conn.execute(table.delete())

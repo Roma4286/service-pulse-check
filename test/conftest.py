@@ -1,10 +1,12 @@
 import os
+from unittest.mock import create_autospec
 
 import pytest
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
+from app.celery.tasks import ServiceScheduler
 from app.models import Base
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL", "sqlite+pysqlite:///:memory:")
@@ -37,3 +39,8 @@ def session(engine):
     with engine.begin() as conn:
         for table in reversed(Base.metadata.sorted_tables):
             conn.execute(table.delete())
+
+
+@pytest.fixture
+def scheduler():
+    return create_autospec(ServiceScheduler)

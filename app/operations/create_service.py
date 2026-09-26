@@ -4,7 +4,7 @@ from app.celery.tasks import ServiceScheduler
 from app.models import ServiceType, Service
 from app.repositories.service_repository import ServiceRepository
 
-from .errors import ServicePersistenceError, ServiceSchedulingError
+from .errors import ServicePersistenceError, ServiceSchedulingError, TimeoutGreaterThanIntervalError
 
 
 @dataclass(frozen=True, slots=True)
@@ -24,6 +24,9 @@ class CreateService:
     service_repository: ServiceRepository
 
     def __call__(self, *, dto: CreateServiceDTO) -> Service:
+        if dto.timeout_in_seconds > dto.interval_in_seconds:
+            raise TimeoutGreaterThanIntervalError()
+
         try:
             service = self.service_repository.create_new_service(
                 name=dto.name,

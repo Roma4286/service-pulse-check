@@ -2,20 +2,30 @@ import pytest
 
 from app.models import Service, ServiceType
 from app.operations.create_service import CreateService, CreateServiceDTO
-from app.operations.errors import ServicePersistenceError, ServiceSchedulingError
+from app.operations.errors import (
+    ServicePersistenceError,
+    ServiceSchedulingError,
+    TimeoutGreaterThanIntervalError,
+)
 from app.repositories.service_repository import ServiceRepository
 from factories import make_user
 
 
-def make_dto(user_id: int, *, is_active: bool = True) -> CreateServiceDTO:
+def make_dto(
+    user_id: int,
+    *,
+    is_active: bool = True,
+    interval_in_seconds: int = 30,
+    timeout_in_seconds: float = 2.5,
+) -> CreateServiceDTO:
     return CreateServiceDTO(
         name="api",
         url="https://api.example.com",
         type=ServiceType.HTTP,
         is_active=is_active,
         user_id=user_id,
-        interval_in_seconds=30,
-        timeout_in_seconds=2.5,
+        interval_in_seconds=interval_in_seconds,
+        timeout_in_seconds=timeout_in_seconds,
     )
 
 
@@ -51,6 +61,24 @@ def test_create_inactive_service_persists_without_scheduling(session, scheduler,
 
     assert session.query(Service).filter_by(id=service.id).count() == 1
     scheduler.create_task.assert_not_called()
+
+
+def test_create_service_with_timeout_equal_to_interval_is_allowed(session, create_service):
+    user = make_user(session)
+
+    service = create_service(dto=make_dto(user.id, interval_in_seconds=30, timeout_in_seconds=30.0))
+
+    assert service.timeout_in_seconds == service.interval_in_seconds
+
+
+def test_create_service_with_timeout_greater_than_interval_raises(session, scheduler, create_service):
+    user = make_user(session)
+
+    with pytest.raises(TimeoutGreaterThanIntervalError):
+        create_service(dto=make_dto(user.id, interval_in_seconds=30, timeout_in_seconds=31.0))
+
+    assert session.query(Service).count() == 0
+    assert scheduler.method_calls == []
 
 
 def test_create_service_rolls_back_when_scheduling_fails(session, scheduler, create_service):

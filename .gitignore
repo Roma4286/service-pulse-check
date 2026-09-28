@@ -15,3 +15,6 @@ __pycache__/
 *.egg-info/
 
 .claude
+
+.coverage
+htmlcov/

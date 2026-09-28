@@ -27,7 +27,7 @@ def create_app():
     app.config["JWT_COOKIE_SAMESITE"] = "Lax"
     app.config["JWT_ACCESS_COOKIE_PATH"] = "/api/"
     app.config["JWT_COOKIE_SECURE"] = True
-    app.config["JWT_COOKIE_CSRF_PROTECT"] = False
+    app.config["JWT_COOKIE_CSRF_PROTECT"] = True
 
     spec.register(app)
     jwt.init_app(app)

@@ -56,6 +56,51 @@ def test_protected_endpoint_with_invalid_token_returns_401(app, client, method, 
     assert response.get_json()["error"] == "Unauthorized"
 
 
+UNSAFE_PROTECTED_ENDPOINTS = [(method, url) for method, url in PROTECTED_ENDPOINTS if method != "GET"]
+
+
+@pytest.mark.parametrize(("method", "url"), UNSAFE_PROTECTED_ENDPOINTS)
+@pytest.mark.usefixtures("logged_in")
+def test_unsafe_endpoint_without_csrf_token_returns_401(client, csrf_header_key, method, url):
+    del client.environ_base[csrf_header_key]
+
+    response = client.open(url, method=method)
+
+    assert response.status_code == 401
+    assert response.get_json() == {"error": "Unauthorized", "message": "Missing CSRF token"}
+
+
+@pytest.mark.parametrize(("method", "url"), UNSAFE_PROTECTED_ENDPOINTS)
+@pytest.mark.usefixtures("logged_in")
+def test_unsafe_endpoint_with_wrong_csrf_token_returns_401(client, csrf_header_key, method, url):
+    client.environ_base[csrf_header_key] = "wrong-token"
+
+    response = client.open(url, method=method)
+
+    assert response.status_code == 401
+    assert response.get_json() == {"error": "Unauthorized", "message": "CSRF double submit tokens do not match"}
+
+
+@pytest.mark.usefixtures("logged_in")
+def test_create_service_without_csrf_token_does_not_create_service(client, session, scheduler, csrf_header_key):
+    del client.environ_base[csrf_header_key]
+
+    response = client.post(SERVICES_URL, json=service_payload())
+
+    assert response.status_code == 401
+    assert session.query(Service).count() == 0
+    scheduler.create_task.assert_not_called()
+
+
+@pytest.mark.usefixtures("logged_in")
+def test_get_endpoint_does_not_require_csrf_token(client, csrf_header_key):
+    del client.environ_base[csrf_header_key]
+
+    response = client.get(SERVICES_URL)
+
+    assert response.status_code == 200
+
+
 # GET /services
 
 

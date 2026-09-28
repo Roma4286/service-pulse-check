@@ -82,6 +82,30 @@ def test_login_cookie_gives_access_to_protected_endpoints(client, session):
     assert response.status_code == 200
 
 
+def test_login_sets_csrf_cookie_readable_by_js(client, session):
+    create_user(session, username="alice", password="secret")
+
+    response = login(client, "alice", "secret")
+
+    set_cookies = [h for h in response.headers.getlist("Set-Cookie") if h.startswith("csrf_access_token=")]
+    assert len(set_cookies) == 1
+    assert "HttpOnly" not in set_cookies[0]
+
+
+def test_csrf_cookie_value_gives_access_to_unsafe_endpoints(app, client, session):
+    create_user(session, username="alice", password="secret")
+    login(client, "alice", "secret")
+    csrf_cookie = client.get_cookie(
+        app.config["JWT_ACCESS_CSRF_COOKIE_NAME"], path=app.config["JWT_ACCESS_CSRF_COOKIE_PATH"]
+    )
+
+    response = client.delete(
+        "/api/services/999", headers={app.config["JWT_ACCESS_CSRF_HEADER_NAME"]: csrf_cookie.value}
+    )
+
+    assert response.status_code == 404
+    
+
 def test_login_with_wrong_password_returns_401(app, client, session):
     create_user(session, username="alice", password="secret")
 

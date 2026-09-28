@@ -61,4 +61,7 @@ def create_app():
     from .api import api_bp
     app.register_blueprint(api_bp)
 
+    from .web import web_bp
+    app.register_blueprint(web_bp)
+
     return app

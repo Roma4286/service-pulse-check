@@ -58,7 +58,7 @@ def test_login_sets_access_token_cookie(app, client, session):
         assert decode_token(cookie.value)["sub"] == str(user.id)
 
 
-def test_login_cookie_is_http_only_secure_and_scoped_to_api(client, session):
+def test_login_cookie_is_http_only_secure_and_scoped_to_whole_site(client, session):
     create_user(session, username="alice", password="secret")
 
     response = login(client, "alice", "secret")
@@ -70,7 +70,7 @@ def test_login_cookie_is_http_only_secure_and_scoped_to_api(client, session):
     assert "HttpOnly" in set_cookie
     assert "Secure" in set_cookie
     assert "SameSite=Lax" in set_cookie
-    assert "Path=/api/" in set_cookie
+    assert "Path=/;" in set_cookie
 
 
 def test_login_cookie_gives_access_to_protected_endpoints(client, session):

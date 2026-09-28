@@ -3,9 +3,10 @@ from unittest.mock import create_autospec
 
 import pytest
 from sqlalchemy import create_engine, event
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, scoped_session
 from sqlalchemy.pool import StaticPool
 
+import app.web_app as web_app
 from app.celery.tasks import ServiceScheduler
 from app.models import Base
 
@@ -44,3 +45,17 @@ def session(engine):
 @pytest.fixture
 def scheduler():
     return create_autospec(ServiceScheduler)
+
+
+@pytest.fixture
+def app(monkeypatch, session, scheduler):
+    monkeypatch.setattr(web_app, "Session", scoped_session(lambda: session))
+    flask_app = web_app.create_app()
+    flask_app.config["TESTING"] = True
+    flask_app.extensions["scheduler"] = scheduler
+    return flask_app
+
+
+@pytest.fixture
+def client(app):
+    return app.test_client()

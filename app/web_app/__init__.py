@@ -1,19 +1,20 @@
 from datetime import timedelta
+
 from flask import Flask, g
 
-from app.config import settings
-from app.database import Session
-from app.repositories.service_repository import ServiceRepository
-from app.repositories.check_result_repository import CheckResultRepository
-from app.repositories.user_repository import UserRepository
 from app.celery.celery_app import celery_app
 from app.celery.tasks import ServiceScheduler
+from app.config import settings
+from app.database import Session
 from app.operations.create_service import CreateService
-from app.operations.update_service import UpdateService
 from app.operations.delete_service import DeleteService
 from app.operations.register_user import RegisterUser
-from app.web_app.extensions import jwt, spec
+from app.operations.update_service import UpdateService
+from app.repositories.check_result_repository import CheckResultRepository
+from app.repositories.service_repository import ServiceRepository
+from app.repositories.user_repository import UserRepository
 from app.web_app.api.error_handlers import reformat_spec_validation_error
+from app.web_app.extensions import jwt, spec
 
 spec.before = reformat_spec_validation_error
 
@@ -22,7 +23,9 @@ def create_app():
     app = Flask(__name__)
     app.config["FLASK_PYDANTIC_VALIDATION_ERROR_RAISE"] = True
     app.config["JWT_SECRET_KEY"] = settings.jwt_secret_key
-    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=settings.jwt_access_token_expires_in_hours)
+    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(
+        hours=settings.jwt_access_token_expires_in_hours
+    )
     app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
     app.config["JWT_COOKIE_SAMESITE"] = "Lax"
     app.config["JWT_ACCESS_COOKIE_PATH"] = "/"
@@ -59,9 +62,11 @@ def create_app():
         Session.remove()
 
     from .api import api_bp
+
     app.register_blueprint(api_bp)
 
     from .web import web_bp
+
     app.register_blueprint(web_bp)
 
     return app

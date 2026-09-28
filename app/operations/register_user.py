@@ -20,7 +20,9 @@ class RegisterUser:
 
     def __call__(self, *, dto: RegisterUserDTO) -> User:
         try:
-            user = self.user_repository.create_new_user(username=dto.username, password=dto.password)
+            user = self.user_repository.create_new_user(
+                username=dto.username, password=dto.password
+            )
         except IntegrityError as e:
             self.user_repository.db_rollback()
             raise UsernameAlreadyTakenError(username=dto.username) from e

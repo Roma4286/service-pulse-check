@@ -8,8 +8,9 @@ from .errors import (
     ServiceNotFoundError,
     ServicePersistenceError,
     ServiceSchedulingError,
-    TimeoutGreaterThanIntervalError
+    TimeoutGreaterThanIntervalError,
 )
+
 
 @dataclass(frozen=True, slots=True)
 class UpdateServiceDTO:
@@ -30,22 +31,27 @@ class UpdateService:
         service = self.service_repository.get_service_by_id(dto.user_id, dto.service_id)
 
         if service is None:
-            raise ServiceNotFoundError(message=f"Service with id={dto.service_id} not found in the database")
-        
+            raise ServiceNotFoundError(
+                message=f"Service with id={dto.service_id} not found in the database"
+            )
+
         previous_is_active = service.is_active
         previous_interval_in_seconds = service.interval_in_seconds
         previous_timeout_in_seconds = service.timeout_in_seconds
 
         new_interval_in_seconds = (
-            dto.interval_in_seconds if dto.interval_in_seconds is not None else previous_interval_in_seconds
+            dto.interval_in_seconds
+            if dto.interval_in_seconds is not None
+            else previous_interval_in_seconds
         )
         new_timeout_in_seconds = (
-            dto.timeout_in_seconds if dto.timeout_in_seconds is not None else previous_timeout_in_seconds
+            dto.timeout_in_seconds
+            if dto.timeout_in_seconds is not None
+            else previous_timeout_in_seconds
         )
 
         if new_timeout_in_seconds > new_interval_in_seconds:
             raise TimeoutGreaterThanIntervalError()
-
 
         try:
             service = self.service_repository.update_service(
@@ -58,7 +64,9 @@ class UpdateService:
                 is_db_transaction=True,
             )
         except Exception as e:
-            raise ServicePersistenceError(service_id=dto.service_id, name=dto.name) from e
+            raise ServicePersistenceError(
+                service_id=dto.service_id, name=dto.name
+            ) from e
         new_is_active = service.is_active
         schedule_changed = (
             previous_interval_in_seconds != service.interval_in_seconds
@@ -83,7 +91,7 @@ class UpdateService:
                     service_type=service.type,
                     interval_in_seconds=service.interval_in_seconds,
                     timeout_in_seconds=service.timeout_in_seconds,
-            )     
+                )
         except Exception as e:
             self.service_repository.db_rollback()
             raise ServiceSchedulingError(service_id=service.id) from e

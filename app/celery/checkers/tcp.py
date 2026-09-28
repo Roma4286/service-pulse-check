@@ -10,7 +10,9 @@ class TcpChecker(BaseChecker):
 
         start = time.monotonic()
         try:
-            with socket.create_connection((host, int(port)), timeout=timeout_in_seconds):
+            with socket.create_connection(
+                (host, int(port)), timeout=timeout_in_seconds
+            ):
                 status_code = True
         except OSError:
             status_code = False

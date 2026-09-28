@@ -1,5 +1,4 @@
 from flask import Blueprint, g, request
-
 from flask_jwt_extended import create_access_token
 from flask_pydantic_spec import Response
 
@@ -8,23 +7,40 @@ from app.operations.register_user import RegisterUser, RegisterUserDTO
 from app.repositories.user_repository import UserRepository
 from app.web_app.extensions import spec
 
-from .schemas import UserSchema, UserResponseSchema
-from ..responses import api_response, api_response_set_auth_cookies, api_response_unset_auth_cookies, unauthorized
+from ..responses import (
+    api_response,
+    api_response_set_auth_cookies,
+    api_response_unset_auth_cookies,
+    unauthorized,
+)
+from .schemas import UserResponseSchema, UserSchema
 
-auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
+auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
+
 
 @auth_bp.post("/register")
-@spec.validate(body=UserSchema, resp=Response("HTTP_409", HTTP_201=UserResponseSchema), tags=["auth"])
+@spec.validate(
+    body=UserSchema,
+    resp=Response("HTTP_409", HTTP_201=UserResponseSchema),
+    tags=["auth"],
+)
 def register():
     body: UserSchema = request.context.body
     operation: RegisterUser = g.register_user
 
-    user: User = operation(dto=RegisterUserDTO(username=body.username, password=body.password))
+    user: User = operation(
+        dto=RegisterUserDTO(username=body.username, password=body.password)
+    )
 
     return api_response(data={"username": user.username}, status_code=201)
 
-@auth_bp.route('/login', methods=['POST'])
-@spec.validate(body=UserSchema, resp=Response("HTTP_401", HTTP_200=UserResponseSchema), tags=["auth"])
+
+@auth_bp.route("/login", methods=["POST"])
+@spec.validate(
+    body=UserSchema,
+    resp=Response("HTTP_401", HTTP_200=UserResponseSchema),
+    tags=["auth"],
+)
 def login():
     body: UserSchema = request.context.body
     user_repo: UserRepository = g.user_repo
@@ -35,6 +51,7 @@ def login():
 
     access_token = create_access_token(identity=str(user.id))
     return api_response_set_auth_cookies(access_token, data={"username": user.username})
+
 
 @auth_bp.post("/logout")
 @spec.validate(resp=Response("HTTP_200"), tags=["auth"])

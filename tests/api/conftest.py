@@ -17,7 +17,9 @@ def logged_in(app, client, session, csrf_header_key):
         token = create_access_token(identity=str(user.id))
         csrf_token = get_csrf_token(token)
     client.set_cookie(
-        app.config["JWT_ACCESS_COOKIE_NAME"], token, path=app.config["JWT_ACCESS_COOKIE_PATH"]
+        app.config["JWT_ACCESS_COOKIE_NAME"],
+        token,
+        path=app.config["JWT_ACCESS_COOKIE_PATH"],
     )
     client.environ_base[csrf_header_key] = csrf_token
     return user

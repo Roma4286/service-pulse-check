@@ -4,7 +4,9 @@ from app.models import CheckResult, Service, User
 from tests.factories import make_check_result, make_service, make_user
 
 
-def create_user(session: Session, *, username: str | None = None, password: str = "password") -> User:
+def create_user(
+    session: Session, *, username: str | None = None, password: str = "password"
+) -> User:
     user = make_user(session, username=username, password=password)
     session.commit()
     return user

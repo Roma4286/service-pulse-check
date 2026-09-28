@@ -6,11 +6,12 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session, scoped_session
 from sqlalchemy.pool import StaticPool
 
-import app.web_app as web_app
+from app import web_app
 from app.celery.tasks import ServiceScheduler
 from app.models import Base
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL", "sqlite+pysqlite:///:memory:")
+
 
 @pytest.fixture(scope="session")
 def engine():

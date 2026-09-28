@@ -5,8 +5,10 @@ class UserSchema(BaseModel):
     username: str
     password: str
 
+
 class UsernameResponseSchema(BaseModel):
     username: str
+
 
 class UserResponseSchema(BaseModel):
     success: bool

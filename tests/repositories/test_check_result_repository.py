@@ -1,9 +1,9 @@
 import pytest
+from factories import make_check_result, make_service, make_user
 from sqlalchemy.exc import IntegrityError
 
 from app.models import CheckResult, ResultStatus
 from app.repositories.check_result_repository import CheckResultRepository
-from factories import make_check_result, make_service, make_user
 
 
 def test_create_result_persists_result(session):
@@ -24,7 +24,9 @@ def test_create_result_in_transaction_is_not_committed(session):
     service = make_service(session, make_user(session))
     session.commit()
 
-    repository.create_result(service.id, ResultStatus.SUCCESS, 0.1, is_db_transaction=True)
+    repository.create_result(
+        service.id, ResultStatus.SUCCESS, 0.1, is_db_transaction=True
+    )
     repository.db_rollback()
 
     assert session.query(CheckResult).count() == 0

@@ -48,7 +48,11 @@ def test_protected_endpoint_without_token_returns_401(client, method, url):
 
 @pytest.mark.parametrize(("method", "url"), PROTECTED_ENDPOINTS)
 def test_protected_endpoint_with_invalid_token_returns_401(app, client, method, url):
-    client.set_cookie(app.config["JWT_ACCESS_COOKIE_NAME"], "not-a-jwt", path=app.config["JWT_ACCESS_COOKIE_PATH"])
+    client.set_cookie(
+        app.config["JWT_ACCESS_COOKIE_NAME"],
+        "not-a-jwt",
+        path=app.config["JWT_ACCESS_COOKIE_PATH"],
+    )
 
     response = client.open(url, method=method)
 
@@ -56,33 +60,47 @@ def test_protected_endpoint_with_invalid_token_returns_401(app, client, method, 
     assert response.get_json()["error"] == "Unauthorized"
 
 
-UNSAFE_PROTECTED_ENDPOINTS = [(method, url) for method, url in PROTECTED_ENDPOINTS if method != "GET"]
+UNSAFE_PROTECTED_ENDPOINTS = [
+    (method, url) for method, url in PROTECTED_ENDPOINTS if method != "GET"
+]
 
 
 @pytest.mark.parametrize(("method", "url"), UNSAFE_PROTECTED_ENDPOINTS)
 @pytest.mark.usefixtures("logged_in")
-def test_unsafe_endpoint_without_csrf_token_returns_401(client, csrf_header_key, method, url):
+def test_unsafe_endpoint_without_csrf_token_returns_401(
+    client, csrf_header_key, method, url
+):
     del client.environ_base[csrf_header_key]
 
     response = client.open(url, method=method)
 
     assert response.status_code == 401
-    assert response.get_json() == {"error": "Unauthorized", "message": "Missing CSRF token"}
+    assert response.get_json() == {
+        "error": "Unauthorized",
+        "message": "Missing CSRF token",
+    }
 
 
 @pytest.mark.parametrize(("method", "url"), UNSAFE_PROTECTED_ENDPOINTS)
 @pytest.mark.usefixtures("logged_in")
-def test_unsafe_endpoint_with_wrong_csrf_token_returns_401(client, csrf_header_key, method, url):
+def test_unsafe_endpoint_with_wrong_csrf_token_returns_401(
+    client, csrf_header_key, method, url
+):
     client.environ_base[csrf_header_key] = "wrong-token"
 
     response = client.open(url, method=method)
 
     assert response.status_code == 401
-    assert response.get_json() == {"error": "Unauthorized", "message": "CSRF double submit tokens do not match"}
+    assert response.get_json() == {
+        "error": "Unauthorized",
+        "message": "CSRF double submit tokens do not match",
+    }
 
 
 @pytest.mark.usefixtures("logged_in")
-def test_create_service_without_csrf_token_does_not_create_service(client, session, scheduler, csrf_header_key):
+def test_create_service_without_csrf_token_does_not_create_service(
+    client, session, scheduler, csrf_header_key
+):
     del client.environ_base[csrf_header_key]
 
     response = client.post(SERVICES_URL, json=service_payload())
@@ -122,10 +140,14 @@ def test_get_services_filters_by_is_active(client, session, logged_in, is_active
     inactive_service = create_service(session, logged_in, is_active=False)
     expected_service = active_service if is_active else inactive_service
 
-    response = client.get(SERVICES_URL, query_string={"is_active": str(is_active).lower()})
+    response = client.get(
+        SERVICES_URL, query_string={"is_active": str(is_active).lower()}
+    )
 
     assert response.status_code == 200
-    assert [item["id"] for item in response.get_json()["data"]["services"]] == [expected_service.id]
+    assert [item["id"] for item in response.get_json()["data"]["services"]] == [
+        expected_service.id
+    ]
 
 
 @pytest.mark.usefixtures("logged_in")
@@ -141,7 +163,12 @@ def test_get_services_returns_empty_list(client):
 
 def test_get_service_returns_service(client, session, logged_in):
     service = create_service(
-        session, logged_in, name="demo", url="https://example.com", interval_in_seconds=60, timeout_in_seconds=5.0
+        session,
+        logged_in,
+        name="demo",
+        url="https://example.com",
+        interval_in_seconds=60,
+        timeout_in_seconds=5.0,
     )
 
     response = client.get(f"{SERVICES_URL}/{service.id}")
@@ -182,7 +209,9 @@ def test_get_service_returns_404_for_foreign_service(client, session):
 # POST /services
 
 
-def test_create_service_returns_201_and_schedules(client, session, scheduler, logged_in):
+def test_create_service_returns_201_and_schedules(
+    client, session, scheduler, logged_in
+):
     response = client.post(SERVICES_URL, json=service_payload())
 
     assert response.status_code == 201
@@ -214,10 +243,19 @@ def test_create_service_returns_201_and_schedules(client, session, scheduler, lo
         {"interval_in_seconds": 10, "timeout_in_seconds": 20.0},
         {"name": None},
     ],
-    ids=["bad-url", "bad-type", "zero-interval", "negative-timeout", "timeout-above-interval", "no-name"],
+    ids=[
+        "bad-url",
+        "bad-type",
+        "zero-interval",
+        "negative-timeout",
+        "timeout-above-interval",
+        "no-name",
+    ],
 )
 @pytest.mark.usefixtures("logged_in")
-def test_create_service_with_invalid_body_returns_400(client, session, scheduler, overrides):
+def test_create_service_with_invalid_body_returns_400(
+    client, session, scheduler, overrides
+):
     response = client.post(SERVICES_URL, json=service_payload(**overrides))
 
     assert response.status_code == 400
@@ -250,7 +288,9 @@ def test_update_service_returns_updated_service(client, session, logged_in):
     assert get_stored_service(session, service.id).name == "renamed"
 
 
-def test_update_service_deactivation_deletes_task(client, session, scheduler, logged_in):
+def test_update_service_deactivation_deletes_task(
+    client, session, scheduler, logged_in
+):
     service = create_service(session, logged_in, is_active=True)
 
     response = client.patch(f"{SERVICES_URL}/{service.id}", json={"is_active": False})
@@ -260,10 +300,16 @@ def test_update_service_deactivation_deletes_task(client, session, scheduler, lo
     scheduler.delete_task.assert_called_once_with(service.id)
 
 
-def test_update_service_with_timeout_above_current_interval_returns_400(client, session, logged_in):
-    service = create_service(session, logged_in, interval_in_seconds=60, timeout_in_seconds=5.0)
+def test_update_service_with_timeout_above_current_interval_returns_400(
+    client, session, logged_in
+):
+    service = create_service(
+        session, logged_in, interval_in_seconds=60, timeout_in_seconds=5.0
+    )
 
-    response = client.patch(f"{SERVICES_URL}/{service.id}", json={"timeout_in_seconds": 61.0})
+    response = client.patch(
+        f"{SERVICES_URL}/{service.id}", json={"timeout_in_seconds": 61.0}
+    )
 
     assert response.status_code == 400
     assert response.get_json()["error"] == "Bad Request"
@@ -273,7 +319,9 @@ def test_update_service_with_timeout_above_current_interval_returns_400(client, 
 def test_update_service_with_invalid_body_returns_400(client, session, logged_in):
     service = create_service(session, logged_in)
 
-    response = client.patch(f"{SERVICES_URL}/{service.id}", json={"interval_in_seconds": 0})
+    response = client.patch(
+        f"{SERVICES_URL}/{service.id}", json={"interval_in_seconds": 0}
+    )
 
     assert response.status_code == 400
 
@@ -282,7 +330,9 @@ def test_update_service_with_invalid_body_returns_400(client, session, logged_in
 def test_update_service_returns_404_for_foreign_service(client, session):
     foreign_service = create_service(session, create_user(session), name="foreign")
 
-    response = client.patch(f"{SERVICES_URL}/{foreign_service.id}", json={"name": "hacked"})
+    response = client.patch(
+        f"{SERVICES_URL}/{foreign_service.id}", json={"name": "hacked"}
+    )
 
     assert response.status_code == 404
     assert get_stored_service(session, foreign_service.id).name == "foreign"

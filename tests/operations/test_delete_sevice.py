@@ -1,22 +1,26 @@
 import pytest
+from factories import make_service, make_user
 
 from app.models import Service
 from app.operations.delete_service import DeleteService, DeleteServiceDTO
 from app.operations.errors import ServiceNotFoundError, ServiceSchedulingError
 from app.repositories.service_repository import ServiceRepository
-from factories import make_service, make_user
 
 
 @pytest.fixture
 def delete_service(session, scheduler):
-    return DeleteService(scheduler=scheduler, service_repository=ServiceRepository(session))
+    return DeleteService(
+        scheduler=scheduler, service_repository=ServiceRepository(session)
+    )
 
 
 def test_delete_service_removes_service_and_task(session, scheduler, delete_service):
     user = make_user(session)
     service = make_service(session, user)
 
-    result = delete_service(dto=DeleteServiceDTO(user_id=user.id, service_id=service.id))
+    result = delete_service(
+        dto=DeleteServiceDTO(user_id=user.id, service_id=service.id)
+    )
     session.rollback()
 
     assert result is True
@@ -38,13 +42,17 @@ def test_delete_service_raises_for_other_user(session, scheduler, delete_service
     other_user = make_user(session)
 
     with pytest.raises(ServiceNotFoundError):
-        delete_service(dto=DeleteServiceDTO(user_id=other_user.id, service_id=service.id))
+        delete_service(
+            dto=DeleteServiceDTO(user_id=other_user.id, service_id=service.id)
+        )
 
     assert session.query(Service).count() == 1
     scheduler.delete_task.assert_not_called()
 
 
-def test_delete_service_rolls_back_when_scheduling_fails(session, scheduler, delete_service):
+def test_delete_service_rolls_back_when_scheduling_fails(
+    session, scheduler, delete_service
+):
     user = make_user(session)
     service = make_service(session, user)
     session.commit()

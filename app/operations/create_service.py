@@ -1,10 +1,14 @@
 from dataclasses import dataclass
 
 from app.celery.tasks import ServiceScheduler
-from app.models import ServiceType, Service
+from app.models import Service, ServiceType
 from app.repositories.service_repository import ServiceRepository
 
-from .errors import ServicePersistenceError, ServiceSchedulingError, TimeoutGreaterThanIntervalError
+from .errors import (
+    ServicePersistenceError,
+    ServiceSchedulingError,
+    TimeoutGreaterThanIntervalError,
+)
 
 
 @dataclass(frozen=True, slots=True)

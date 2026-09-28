@@ -20,7 +20,9 @@ class ServiceCreateSchema(BaseModel):
     @model_validator(mode="after")
     def check_timeout_not_greater_than_interval(self):
         if self.timeout_in_seconds > self.interval_in_seconds:
-            raise ValueError("timeout_in_seconds must not be greater than interval_in_seconds")
+            raise ValueError(
+                "timeout_in_seconds must not be greater than interval_in_seconds"
+            )
         return self
 
 

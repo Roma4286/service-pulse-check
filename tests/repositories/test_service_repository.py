@@ -1,9 +1,9 @@
 import pytest
+from factories import make_check_result, make_service, make_user
 from sqlalchemy.exc import IntegrityError
 
 from app.models import CheckResult, Service, ServiceType
 from app.repositories.service_repository import ServiceRepository
-from factories import make_check_result, make_service, make_user
 
 
 def test_create_new_service_persists_service(session):
@@ -94,7 +94,9 @@ def test_get_service_by_id_returns_none_for_other_user(session):
     other_user = make_user(session)
     service = make_service(session, owner)
 
-    assert ServiceRepository(session).get_service_by_id(other_user.id, service.id) is None
+    assert (
+        ServiceRepository(session).get_service_by_id(other_user.id, service.id) is None
+    )
 
 
 def test_get_services_returns_only_user_services(session):
@@ -136,7 +138,9 @@ def test_update_service_changes_only_given_fields(session):
     user = make_user(session)
     new_service = make_service(session, user, name="old", url="https://old.example.com")
 
-    service = repository.update_service(new_service.id, user.id, name="new", is_active=False)
+    service = repository.update_service(
+        new_service.id, user.id, name="new", is_active=False
+    )
     session.expunge_all()
     stored_service = session.get(Service, new_service.id)
 
@@ -180,7 +184,9 @@ def test_update_service_in_transaction_is_not_committed(session):
     new_service = make_service(session, user, name="old")
     session.commit()
 
-    repository.update_service(new_service.id, user.id, name="new", is_db_transaction=True)
+    repository.update_service(
+        new_service.id, user.id, name="new", is_db_transaction=True
+    )
     repository.db_rollback()
     session.expunge_all()
 

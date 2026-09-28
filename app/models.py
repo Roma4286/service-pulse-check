@@ -6,16 +6,20 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 from app.security import hash_password, verify_password
 
+
 class Base(DeclarativeBase):
     pass
+
 
 class ServiceType(enum.Enum):
     HTTP = "http"
     TCP = "tcp"
 
+
 class ResultStatus(enum.Enum):
     SUCCESS = "success"
     FAIL = "fail"
+
 
 class User(Base):
     __tablename__ = "users"
@@ -26,12 +30,15 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(unique=True)
-    password_hash : Mapped[str] = mapped_column()
+    password_hash: Mapped[str] = mapped_column()
 
-    services: Mapped[list["Service"]] = relationship("Service", back_populates="user", cascade="all, delete-orphan")
+    services: Mapped[list["Service"]] = relationship(
+        "Service", back_populates="user", cascade="all, delete-orphan"
+    )
 
     def check_password(self, password: str) -> bool:
         return verify_password(password, self.password_hash)
+
 
 class Service(Base):
     __tablename__ = "services"
@@ -47,16 +54,23 @@ class Service(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     user: Mapped["User"] = relationship("User", back_populates="services")
 
-    checks: Mapped[list["CheckResult"]] = relationship("CheckResult", back_populates="service", cascade="all, delete-orphan")
+    checks: Mapped[list["CheckResult"]] = relationship(
+        "CheckResult", back_populates="service", cascade="all, delete-orphan"
+    )
 
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        server_default=func.now(), onupdate=func.now()
+    )
+
 
 class CheckResult(Base):
     __tablename__ = "check_results"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    service_id: Mapped[int] = mapped_column(ForeignKey("services.id", ondelete="CASCADE"))
+    service_id: Mapped[int] = mapped_column(
+        ForeignKey("services.id", ondelete="CASCADE")
+    )
     service: Mapped["Service"] = relationship("Service", back_populates="checks")
 
     status: Mapped[ResultStatus] = mapped_column(Enum(ResultStatus))
@@ -64,6 +78,4 @@ class CheckResult(Base):
     response_time: Mapped[float] = mapped_column()
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
-    __table_args__ = (
-        Index("ix_check_results_service_id", "service_id"),
-    )
+    __table_args__ = (Index("ix_check_results_service_id", "service_id"),)

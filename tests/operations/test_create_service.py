@@ -1,4 +1,5 @@
 import pytest
+from factories import make_user
 
 from app.models import Service, ServiceType
 from app.operations.create_service import CreateService, CreateServiceDTO
@@ -8,7 +9,6 @@ from app.operations.errors import (
     TimeoutGreaterThanIntervalError,
 )
 from app.repositories.service_repository import ServiceRepository
-from factories import make_user
 
 
 def make_dto(
@@ -31,10 +31,14 @@ def make_dto(
 
 @pytest.fixture
 def create_service(session, scheduler):
-    return CreateService(scheduler=scheduler, service_repository=ServiceRepository(session))
+    return CreateService(
+        scheduler=scheduler, service_repository=ServiceRepository(session)
+    )
 
 
-def test_create_active_service_persists_and_schedules(session, scheduler, create_service):
+def test_create_active_service_persists_and_schedules(
+    session, scheduler, create_service
+):
     user = make_user(session)
 
     service = create_service(dto=make_dto(user.id))
@@ -53,7 +57,9 @@ def test_create_active_service_persists_and_schedules(session, scheduler, create
     )
 
 
-def test_create_inactive_service_persists_without_scheduling(session, scheduler, create_service):
+def test_create_inactive_service_persists_without_scheduling(
+    session, scheduler, create_service
+):
     user = make_user(session)
 
     service = create_service(dto=make_dto(user.id, is_active=False))
@@ -63,25 +69,35 @@ def test_create_inactive_service_persists_without_scheduling(session, scheduler,
     scheduler.create_task.assert_not_called()
 
 
-def test_create_service_with_timeout_equal_to_interval_is_allowed(session, create_service):
+def test_create_service_with_timeout_equal_to_interval_is_allowed(
+    session, create_service
+):
     user = make_user(session)
 
-    service = create_service(dto=make_dto(user.id, interval_in_seconds=30, timeout_in_seconds=30.0))
+    service = create_service(
+        dto=make_dto(user.id, interval_in_seconds=30, timeout_in_seconds=30.0)
+    )
 
     assert service.timeout_in_seconds == service.interval_in_seconds
 
 
-def test_create_service_with_timeout_greater_than_interval_raises(session, scheduler, create_service):
+def test_create_service_with_timeout_greater_than_interval_raises(
+    session, scheduler, create_service
+):
     user = make_user(session)
 
     with pytest.raises(TimeoutGreaterThanIntervalError):
-        create_service(dto=make_dto(user.id, interval_in_seconds=30, timeout_in_seconds=31.0))
+        create_service(
+            dto=make_dto(user.id, interval_in_seconds=30, timeout_in_seconds=31.0)
+        )
 
     assert session.query(Service).count() == 0
     assert scheduler.method_calls == []
 
 
-def test_create_service_rolls_back_when_scheduling_fails(session, scheduler, create_service):
+def test_create_service_rolls_back_when_scheduling_fails(
+    session, scheduler, create_service
+):
     user = make_user(session)
     session.commit()
     scheduler.create_task.side_effect = RuntimeError("redis is down")

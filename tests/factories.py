@@ -7,7 +7,9 @@ from app.models import CheckResult, ResultStatus, Service, ServiceType, User
 _usernames = itertools.count(1)
 
 
-def make_user(session: Session, *, username: str | None = None, password: str = "password") -> User:
+def make_user(
+    session: Session, *, username: str | None = None, password: str = "password"
+) -> User:
     user = User(username=username or f"user{next(_usernames)}", password=password)
     session.add(user)
     session.flush()

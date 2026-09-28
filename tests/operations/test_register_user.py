@@ -1,13 +1,13 @@
 from unittest.mock import create_autospec
 
 import pytest
+from factories import make_user
 from sqlalchemy.exc import IntegrityError
 
 from app.models import User
 from app.operations.errors import UsernameAlreadyTakenError, UserPersistenceError
 from app.operations.register_user import RegisterUser, RegisterUserDTO
 from app.repositories.user_repository import UserRepository
-from factories import make_user
 
 
 def test_register_user_persists_user(session):

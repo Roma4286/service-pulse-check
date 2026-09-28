@@ -1,4 +1,3 @@
-
 from app.models import User
 from app.repositories.base_repository import BaseRepository
 
@@ -16,7 +15,9 @@ class UserRepository(BaseRepository):
             self.db_session.expunge(user)
         return user
 
-    def create_new_user(self, username: str, password: str, is_db_transaction: bool = False) -> User:
+    def create_new_user(
+        self, username: str, password: str, is_db_transaction: bool = False
+    ) -> User:
         user = User(username=username, password=password)
         self.db_session.add(user)
 
@@ -24,4 +25,3 @@ class UserRepository(BaseRepository):
 
         self.db_session.expunge(user)
         return user
-

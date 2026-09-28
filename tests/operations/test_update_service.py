@@ -1,6 +1,7 @@
 from unittest.mock import call, patch
 
 import pytest
+from factories import make_service, make_user
 
 from app.models import Service, ServiceType
 from app.operations.errors import (
@@ -11,7 +12,6 @@ from app.operations.errors import (
 )
 from app.operations.update_service import UpdateService, UpdateServiceDTO
 from app.repositories.service_repository import ServiceRepository
-from factories import make_service, make_user
 
 
 def make_dto(
@@ -35,7 +35,9 @@ def make_dto(
 
 @pytest.fixture
 def update_service(session, scheduler):
-    return UpdateService(scheduler=scheduler, service_repository=ServiceRepository(session))
+    return UpdateService(
+        scheduler=scheduler, service_repository=ServiceRepository(session)
+    )
 
 
 def get_stored_service(session, service_id: int) -> Service:
@@ -88,12 +90,18 @@ def test_update_service_activation_creates_task(session, scheduler, update_servi
 def test_update_active_service_schedule_recreates_task(
     session, scheduler, update_service, interval_in_seconds, timeout_in_seconds
 ):
-    service = make_service(session, make_user(session), interval_in_seconds=60, timeout_in_seconds=5.0)
+    service = make_service(
+        session, make_user(session), interval_in_seconds=60, timeout_in_seconds=5.0
+    )
     expected_interval = interval_in_seconds or 60
     expected_timeout = timeout_in_seconds or 5.0
 
     update_service(
-        dto=make_dto(service, interval_in_seconds=interval_in_seconds, timeout_in_seconds=timeout_in_seconds)
+        dto=make_dto(
+            service,
+            interval_in_seconds=interval_in_seconds,
+            timeout_in_seconds=timeout_in_seconds,
+        )
     )
 
     stored_service = get_stored_service(session, service.id)
@@ -111,7 +119,9 @@ def test_update_active_service_schedule_recreates_task(
     ]
 
 
-def test_update_inactive_service_schedule_does_not_touch_scheduler(session, scheduler, update_service):
+def test_update_inactive_service_schedule_does_not_touch_scheduler(
+    session, scheduler, update_service
+):
     service = make_service(session, make_user(session), is_active=False)
 
     update_service(dto=make_dto(service, interval_in_seconds=120))
@@ -120,10 +130,16 @@ def test_update_inactive_service_schedule_does_not_touch_scheduler(session, sche
     assert scheduler.method_calls == []
 
 
-def test_update_service_with_same_schedule_does_not_reschedule(session, scheduler, update_service):
-    service = make_service(session, make_user(session), interval_in_seconds=60, timeout_in_seconds=5.0)
+def test_update_service_with_same_schedule_does_not_reschedule(
+    session, scheduler, update_service
+):
+    service = make_service(
+        session, make_user(session), interval_in_seconds=60, timeout_in_seconds=5.0
+    )
 
-    update_service(dto=make_dto(service, interval_in_seconds=60, timeout_in_seconds=5.0))
+    update_service(
+        dto=make_dto(service, interval_in_seconds=60, timeout_in_seconds=5.0)
+    )
 
     assert scheduler.method_calls == []
 
@@ -131,8 +147,12 @@ def test_update_service_with_same_schedule_does_not_reschedule(session, schedule
 def test_update_service_raises_when_missing(session, scheduler, update_service):
     user = make_user(session)
     dto = UpdateServiceDTO(
-        service_id=999, user_id=user.id, name="new",
-        is_active=None, interval_in_seconds=None, timeout_in_seconds=None,
+        service_id=999,
+        user_id=user.id,
+        name="new",
+        is_active=None,
+        interval_in_seconds=None,
+        timeout_in_seconds=None,
     )
 
     with pytest.raises(ServiceNotFoundError):
@@ -160,11 +180,17 @@ def test_update_service_raises_for_other_user(session, scheduler, update_service
 def test_update_service_with_timeout_greater_than_interval_raises(
     session, scheduler, update_service, interval_in_seconds, timeout_in_seconds
 ):
-    service = make_service(session, make_user(session), interval_in_seconds=60, timeout_in_seconds=5.0)
+    service = make_service(
+        session, make_user(session), interval_in_seconds=60, timeout_in_seconds=5.0
+    )
 
     with pytest.raises(TimeoutGreaterThanIntervalError):
         update_service(
-            dto=make_dto(service, interval_in_seconds=interval_in_seconds, timeout_in_seconds=timeout_in_seconds)
+            dto=make_dto(
+                service,
+                interval_in_seconds=interval_in_seconds,
+                timeout_in_seconds=timeout_in_seconds,
+            )
         )
 
     stored_service = get_stored_service(session, service.id)
@@ -173,7 +199,9 @@ def test_update_service_with_timeout_greater_than_interval_raises(
     assert scheduler.method_calls == []
 
 
-def test_update_service_rolls_back_when_scheduling_fails(session, scheduler, update_service):
+def test_update_service_rolls_back_when_scheduling_fails(
+    session, scheduler, update_service
+):
     service = make_service(session, make_user(session), is_active=True)
     session.commit()
     scheduler.delete_task.side_effect = RuntimeError("redis is down")
@@ -188,12 +216,18 @@ def test_update_service_rolls_back_when_scheduling_fails(session, scheduler, upd
 
 def test_update_service_wraps_persistence_error(session, scheduler):
     service_repository = ServiceRepository(session)
-    update_service = UpdateService(scheduler=scheduler, service_repository=service_repository)
+    update_service = UpdateService(
+        scheduler=scheduler, service_repository=service_repository
+    )
     service = make_service(session, make_user(session))
 
-    with patch.object(service_repository, "update_service", side_effect=RuntimeError("db is down")):
-        with pytest.raises(ServicePersistenceError) as exc_info:
-            update_service(dto=make_dto(service, name="new"))
+    with (
+        patch.object(
+            service_repository, "update_service", side_effect=RuntimeError("db is down")
+        ),
+        pytest.raises(ServicePersistenceError) as exc_info,
+    ):
+        update_service(dto=make_dto(service, name="new"))
 
     assert exc_info.value.context == {"service_id": service.id, "name": "new"}
     assert isinstance(exc_info.value.__cause__, RuntimeError)

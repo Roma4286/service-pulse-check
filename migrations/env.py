@@ -8,7 +8,7 @@ from app.models import Base
 
 config = context.config
 fileConfig(config.config_file_name)
-logger = logging.getLogger('alembic.env')
+logger = logging.getLogger("alembic.env")
 
 target_metadata = Base.metadata
 
@@ -24,11 +24,11 @@ def run_migrations_offline():
 
 
 def process_revision_directives(context, revision, directives):
-    if getattr(config.cmd_opts, 'autogenerate', False):
+    if getattr(config.cmd_opts, "autogenerate", False):
         script = directives[0]
         if script.upgrade_ops.is_empty():
             directives[:] = []
-            logger.info('No changes in schema detected.')
+            logger.info("No changes in schema detected.")
 
 
 def run_migrations_online():

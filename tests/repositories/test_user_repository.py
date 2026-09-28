@@ -1,9 +1,9 @@
 import pytest
+from factories import make_user
 from sqlalchemy.exc import IntegrityError
 
 from app.models import User
 from app.repositories.user_repository import UserRepository
-from factories import make_user
 
 
 def test_create_new_user_persists_user(session):
@@ -22,7 +22,9 @@ def test_create_new_user_persists_user(session):
 def test_create_new_user_in_transaction_is_not_committed(session):
     repository = UserRepository(session)
 
-    repository.create_new_user(username="alice", password="secret", is_db_transaction=True)
+    repository.create_new_user(
+        username="alice", password="secret", is_db_transaction=True
+    )
     repository.db_rollback()
 
     assert session.query(User).count() == 0

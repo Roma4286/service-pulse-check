@@ -1,7 +1,7 @@
 from flask import current_app, jsonify
-from werkzeug.exceptions import HTTPException
 from flask_jwt_extended.exceptions import JWTExtendedException
 from jwt.exceptions import PyJWTError
+from werkzeug.exceptions import HTTPException
 
 from app.operations.base_service_error import BaseServiceError
 from app.operations.errors import (

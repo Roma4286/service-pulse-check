@@ -4,12 +4,22 @@ from app.models import User
 from tests.api.api_factories import create_user
 
 
-def register(client, username: str = "alice", password: str = "secret", confirm_password: str | None = None):
-    return client.post("/register", data={
-        "username": username,
-        "password": password,
-        "confirm_password": password if confirm_password is None else confirm_password,
-    })
+def register(
+    client,
+    username: str = "alice",
+    password: str = "secret",
+    confirm_password: str | None = None,
+):
+    return client.post(
+        "/register",
+        data={
+            "username": username,
+            "password": password,
+            "confirm_password": password
+            if confirm_password is None
+            else confirm_password,
+        },
+    )
 
 
 def login(client, username: str = "alice", password: str = "secret"):
@@ -17,7 +27,9 @@ def login(client, username: str = "alice", password: str = "secret"):
 
 
 def get_access_cookie(app, client):
-    return client.get_cookie(app.config["JWT_ACCESS_COOKIE_NAME"], path=app.config["JWT_ACCESS_COOKIE_PATH"])
+    return client.get_cookie(
+        app.config["JWT_ACCESS_COOKIE_NAME"], path=app.config["JWT_ACCESS_COOKIE_PATH"]
+    )
 
 
 # /register
@@ -126,4 +138,3 @@ def test_logout_removes_cookie_and_redirects_to_login(app, client, session):
     assert response.status_code == 302
     assert response.headers["Location"] == "/login"
     assert get_access_cookie(app, client) is None
-

@@ -4,6 +4,7 @@ import requests
 
 from .base import BaseChecker
 
+
 class HttpChecker(BaseChecker):
     def check(self, url: str, timeout_in_seconds: float) -> tuple[bool, float]:
         start = time.monotonic()

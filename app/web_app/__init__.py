@@ -23,6 +23,11 @@ def create_app():
     app.config["FLASK_PYDANTIC_VALIDATION_ERROR_RAISE"] = True
     app.config["JWT_SECRET_KEY"] = settings.jwt_secret_key
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=settings.jwt_access_token_expires_in_hours)
+    app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
+    app.config["JWT_COOKIE_SAMESITE"] = "Lax"
+    app.config["JWT_ACCESS_COOKIE_PATH"] = "/api/"
+    app.config["JWT_COOKIE_SECURE"] = True
+    app.config["JWT_COOKIE_CSRF_PROTECT"] = False
 
     spec.register(app)
     jwt.init_app(app)

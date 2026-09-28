@@ -8,8 +8,8 @@ from app.operations.register_user import RegisterUser, RegisterUserDTO
 from app.repositories.user_repository import UserRepository
 from app.web_app.extensions import spec
 
-from .schemas import TokenResponseSchema, UserSchema, UserResponseSchema
-from ..responses import api_response, unauthorized
+from .schemas import UserSchema, UserResponseSchema
+from ..responses import api_response, api_response_set_auth_cookies, api_response_unset_auth_cookies, unauthorized
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -24,7 +24,7 @@ def register():
     return api_response(data={"username": user.username}, status_code=201)
 
 @auth_bp.route('/login', methods=['POST'])
-@spec.validate(body=UserSchema, resp=Response("HTTP_401", HTTP_200=TokenResponseSchema), tags=["auth"])
+@spec.validate(body=UserSchema, resp=Response("HTTP_401", HTTP_200=UserResponseSchema), tags=["auth"])
 def login():
     body: UserSchema = request.context.body
     user_repo: UserRepository = g.user_repo
@@ -34,4 +34,9 @@ def login():
         return unauthorized("Invalid username or password")
 
     access_token = create_access_token(identity=str(user.id))
-    return api_response(data={"access_token": access_token})
+    return api_response_set_auth_cookies(access_token, data={"username": user.username})
+
+@auth_bp.post("/logout")
+@spec.validate(resp=Response("HTTP_200"), tags=["auth"])
+def logout():
+    return api_response_unset_auth_cookies(message="Logged out")

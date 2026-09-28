@@ -12,12 +12,3 @@ class UserResponseSchema(BaseModel):
     success: bool
     message: str | None = None
     data: UsernameResponseSchema
-
-class TokenSchema(BaseModel):
-    access_token: str
-
-
-class TokenResponseSchema(BaseModel):
-    success: bool
-    message: str | None = None
-    data: TokenSchema

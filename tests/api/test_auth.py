@@ -1,7 +1,7 @@
 import pytest
 from flask_jwt_extended import decode_token
 
-from test.api.api_factories import create_user
+from tests.api.api_factories import create_user
 from app.models import User
 
 

@@ -1,7 +1,7 @@
 import pytest
 
 from app.models import CheckResult, Service, ServiceType
-from test.api.api_factories import create_check_result, create_service, create_user
+from tests.api.api_factories import create_check_result, create_service, create_user
 
 SERVICES_URL = "/api/services"
 

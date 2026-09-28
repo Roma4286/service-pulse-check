@@ -3,7 +3,7 @@ from flask_jwt_extended import create_access_token
 from sqlalchemy.orm import scoped_session
 
 import app.web_app as web_app
-from test.api.api_factories import create_user
+from tests.api.api_factories import create_user
 
 
 @pytest.fixture

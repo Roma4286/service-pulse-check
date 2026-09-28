@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="{{ url_for('web.static', filename='style.css') }}">
+</head>
+<body>
+    <div class="auth-container">
+        <h1>Login</h1>
+        {% if error %}<p class="form-error">{{ error }}</p>{% endif %}
+        <form class="auth-form" method="post" action="{{ url_for('web.auth.login') }}">
+            <div class="input-group">
+                <label for="login-username">Username</label>
+                <input type="text" id="login-username" name="username" value="{{ username or '' }}" placeholder="USERNAME" required>
+            </div>
+            <div class="input-group">
+                <label for="login-password">Password</label>
+                <input type="password" id="login-password" name="password" placeholder="PASSWORD" required>
+            </div>
+            <button type="submit">LOGIN</button>
+        </form>
+        <p class="bottom-text">New account? <a href="{{ url_for('web.auth.register') }}">Create an account</a></p>
+    </div>
+</body>
+</html>

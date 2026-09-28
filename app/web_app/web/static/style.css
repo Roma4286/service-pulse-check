@@ -1,0 +1,98 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #ffffff;
+    color: #000000;
+}
+
+.auth-container {
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+    text-align: center;
+}
+
+h1 {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 30px;
+    color: #000;
+}
+
+.input-group {
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+.input-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: bold;
+    color: #666;
+    margin-bottom: 5px;
+    letter-spacing: 1px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 12px 0;
+    border: none;
+    border-bottom: 1px solid #ccc;
+    font-size: 16px;
+    background: transparent;
+    outline: none;
+    letter-spacing: 1px;
+}
+
+.input-group input::placeholder {
+    color: #bbb;
+    font-size: 14px;
+}
+
+.input-group input:focus {
+    border-bottom: 1px solid #000;
+}
+
+button {
+    width: 100%;
+    padding: 15px;
+    background-color: #ffcc00;
+    color: #000;
+    border: none;
+    font-size: 14px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+button:hover {
+    background-color: #e6b800;
+}
+
+.form-error {
+    margin-bottom: 20px;
+    font-size: 14px;
+    color: #c00;
+}
+
+.bottom-text {
+    margin-top: 25px;
+    font-size: 14px;
+    color: #333;
+}
+
+.bottom-text a {
+    color: #000;
+    text-decoration: underline;
+    font-weight: bold;
+}

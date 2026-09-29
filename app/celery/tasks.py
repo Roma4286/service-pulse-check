@@ -55,7 +55,7 @@ class ServiceScheduler:
         timeout_in_seconds: float,
     ):
         entry = RedBeatSchedulerEntry(
-            name=f"check_service_{service_id}",
+            name=self._task_name(service_id),
             task="check_service",
             schedule=interval_in_seconds,
             args=[service_id, url, service_type.value, timeout_in_seconds],
@@ -65,17 +65,23 @@ class ServiceScheduler:
         entry.save()
 
     def task_exists(self, service_id: int) -> bool:
-        ensure_conf(self.celery_app)
-        key = RedBeatSchedulerEntry.generate_key(
-            self.celery_app, f"check_service_{service_id}"
-        )
+        key = self._get_key(service_id=service_id)
         return bool(get_redis(self.celery_app).exists(key))
 
     def delete_task(self, service_id: int):
         if not self.task_exists(service_id):
             return
 
-        entry = RedBeatSchedulerEntry.from_key(
-            f"redbeat:check_service_{service_id}", app=self.celery_app
-        )
+        key = self._get_key(service_id=service_id)
+
+        entry = RedBeatSchedulerEntry.from_key(key, app=self.celery_app)
         entry.delete()
+
+    def _get_key(self, service_id: int) -> str:
+        ensure_conf(self.celery_app)
+        return RedBeatSchedulerEntry.generate_key(
+            self.celery_app, self._task_name(service_id)
+        )
+
+    def _task_name(self, service_id: int) -> str:
+        return f"check_service_{service_id}"

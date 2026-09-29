@@ -7,6 +7,7 @@ from .base import BaseChecker
 
 logger = logging.getLogger(__name__)
 
+
 def parse_address(url: str) -> tuple[str, int]:
     if "://" in url:
         parts = urlsplit(url)

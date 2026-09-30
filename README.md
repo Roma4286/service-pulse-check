@@ -8,7 +8,8 @@ An uptime monitoring service: you register your services through a REST API, and
 - Per-service check interval and timeout.
 - Periodic tasks are created and removed on the fly, with no scheduler restart: add a service and checks start immediately, turn `is_active` off and they stop.
 - History of results with the response time of each check.
-- JWT authentication, with services scoped to the user who owns them.
+- JWT authentication stored in an HttpOnly cookie, with CSRF protection; services are scoped to the user who owns them.
+- Web interface.
 - Automatically generated API documentation (Swagger UI and ReDoc).
 
 ## Stack
@@ -21,6 +22,10 @@ An uptime monitoring service: you register your services through a REST API, and
 | Database | PostgreSQL 17, SQLAlchemy 2 (ORM), Alembic (migrations) |
 | Background tasks | Celery, RedBeat |
 | Broker and schedule storage | Redis 8 |
+| Web pages | Jinja2 templates, htmx |
+| Testing | pytest, pytest-cov |
+| Linting and formatting | Ruff, pre-commit |
+| CI | GitHub Actions |
 
 ## Requirements
 
@@ -63,18 +68,6 @@ Make sure to replace `JWT_SECRET_KEY` with your own value, since it signs the to
 ```bash
 python -c "import secrets; print(secrets.token_hex(32))"
 ```
-
-Variables:
-
-| Variable | Purpose |
-|---|---|
-| `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | Database credentials and name |
-| `POSTGRES_HOST`, `POSTGRES_PORT` | Database address |
-| `REDIS_URL`, `REDIS_PORT` | Redis address |
-| `JWT_SECRET_KEY` | JWT signing key |
-| `JWT_ACCESS_TOKEN_EXPIRES_IN_HOURS` | Token lifetime in hours |
-
-The application checks that every variable is present on startup and fails with an explicit error if any is missing.
 
 ### 4. Start PostgreSQL and Redis
 
@@ -121,3 +114,44 @@ Once the application is running:
 - Swagger UI - http://localhost:5000/apidoc/swagger
 - ReDoc - http://localhost:5000/apidoc/redoc
 - OpenAPI specification - http://localhost:5000/apidoc/openapi.json
+
+To call protected endpoints in Swagger UI:
+
+1. Log in with `POST /api/auth/login`. The browser keeps the auth cookie and sends it with every request.
+2. Copy the value of the `csrf_access_token` cookie (DevTools → Application → Cookies).
+3. Click **Authorize** and paste it into the `csrfToken` field.
+
+Every protected endpoint is marked with the `csrfToken` scheme, but the server only checks the header on state-changing requests (`POST`, `PUT`, `PATCH`, `DELETE`); `GET` requests work with the cookie alone. The token changes on every login, so paste the new value after logging in again.
+
+## Development
+
+### Tests
+
+```bash
+pytest
+```
+
+With a coverage report:
+```bash
+pytest --cov=app --cov-report=term-missing
+```
+
+Tests run against an in-memory SQLite database by default. 
+
+
+### Linting and formatting
+
+The project uses [Ruff](https://docs.astral.sh/ruff/):
+```bash
+ruff check .
+ruff format .
+```
+
+To run Ruff automatically before every commit, install the pre-commit hooks once:
+```bash
+pre-commit install
+```
+
+### CI
+
+GitHub Actions runs on every push to `main` and on pull requests: one job checks linting and formatting with Ruff, the other runs the tests with coverage.

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Service Pulse Check{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('web.static', filename='style.css') }}">
+    {# htmx 2.0.11 #}
+    <script src="{{ url_for('web.static', filename='htmx.min.js') }}" defer></script>
+</head>
+{% set csrf_token = request.cookies.get(config.JWT_ACCESS_CSRF_COOKIE_NAME) %}
+<body class="{% block body_class %}{% endblock %}"
+      {% if csrf_token %}hx-headers='{{ {config.JWT_ACCESS_CSRF_HEADER_NAME: csrf_token} | tojson }}'{% endif %}>
+    {% block content %}{% endblock %}
+</body>
+</html>

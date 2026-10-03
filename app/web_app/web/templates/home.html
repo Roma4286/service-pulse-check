@@ -6,9 +6,7 @@
     <header class="topbar">
         <div class="account">
             <span class="account-name">{{ user.username }}</span>
-            <span class="account-stats">
-                {{ services | length }} services · {{ services | selectattr("is_active") | list | length }} active
-            </span>
+            {% include "_account_stats.html" %}
         </div>
         <form method="post" action="{{ url_for('web.auth.logout') }}">
             <button type="submit" class="btn-outline">Logout</button>

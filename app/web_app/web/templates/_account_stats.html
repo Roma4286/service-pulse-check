@@ -1,0 +1,3 @@
+<span class="account-stats" id="account-stats"{% if oob %} hx-swap-oob="true"{% endif %}>
+    {{ services | length }} services · {{ services | selectattr("is_active") | list | length }} active
+</span>

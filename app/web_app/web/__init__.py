@@ -9,8 +9,10 @@ web_bp = Blueprint(
 )
 
 from .auth.routes import auth_bp
+from .services.routes import services_bp
 
 web_bp.register_blueprint(auth_bp)
+web_bp.register_blueprint(services_bp)
 
 from . import (
     error_handlers,  # noqa: F401 — registers error handlers on web_bp

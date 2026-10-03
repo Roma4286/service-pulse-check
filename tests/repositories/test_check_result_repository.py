@@ -1,9 +1,14 @@
+from datetime import UTC, datetime, timedelta
+
 import pytest
 from factories import make_check_result, make_service, make_user
 from sqlalchemy.exc import IntegrityError
 
 from app.models import CheckResult, ResultStatus
-from app.repositories.check_result_repository import CheckResultRepository
+from app.repositories.check_result_repository import (
+    MAX_RESULTS_PER_PAGE,
+    CheckResultRepository,
+)
 
 
 def test_create_result_persists_result(session):
@@ -61,6 +66,93 @@ def test_get_result_by_service_id_returns_empty_list_when_none(session):
     service = make_service(session, make_user(session))
 
     assert CheckResultRepository(session).get_result_by_service_id(service.id) == []
+
+
+def make_results(session, service, count: int) -> list[CheckResult]:
+    """Create `count` results one minute apart; returned newest first."""
+    start = datetime(2026, 1, 1, tzinfo=UTC)
+    results = [
+        make_check_result(session, service, created_at=start + timedelta(minutes=i))
+        for i in range(count)
+    ]
+    return results[::-1]
+
+
+def test_get_result_by_service_id_orders_newest_first_by_created_at(session):
+    repository = CheckResultRepository(session)
+    service = make_service(session, make_user(session))
+    newer = make_check_result(
+        session, service, created_at=datetime(2026, 1, 2, tzinfo=UTC)
+    )
+    # Created later, so it has a bigger id, but its date is older.
+    older = make_check_result(
+        session, service, created_at=datetime(2026, 1, 1, tzinfo=UTC)
+    )
+    session.expunge_all()
+
+    results = repository.get_result_by_service_id(service.id)
+
+    assert [result.id for result in results] == [newer.id, older.id]
+
+
+def test_get_result_by_service_id_breaks_created_at_ties_by_id(session):
+    repository = CheckResultRepository(session)
+    service = make_service(session, make_user(session))
+    same_time = datetime(2026, 1, 1, tzinfo=UTC)
+    first = make_check_result(session, service, created_at=same_time)
+    second = make_check_result(session, service, created_at=same_time)
+    session.expunge_all()
+
+    results = repository.get_result_by_service_id(service.id)
+
+    assert [result.id for result in results] == [second.id, first.id]
+
+
+def test_get_result_by_service_id_returns_requested_page(session):
+    repository = CheckResultRepository(session)
+    service = make_service(session, make_user(session))
+    expected = make_results(session, service, 5)
+    session.expunge_all()
+
+    first_page = repository.get_result_by_service_id(service.id, page=1, per_page=2)
+    second_page = repository.get_result_by_service_id(service.id, page=2, per_page=2)
+    last_page = repository.get_result_by_service_id(service.id, page=3, per_page=2)
+
+    assert [r.id for r in first_page] == [r.id for r in expected[0:2]]
+    assert [r.id for r in second_page] == [r.id for r in expected[2:4]]
+    assert [r.id for r in last_page] == [expected[4].id]
+
+
+def test_get_result_by_service_id_returns_empty_list_past_last_page(session):
+    repository = CheckResultRepository(session)
+    service = make_service(session, make_user(session))
+    make_results(session, service, 3)
+
+    assert repository.get_result_by_service_id(service.id, page=2, per_page=3) == []
+
+
+@pytest.mark.parametrize(
+    "page_size_kwargs",
+    [{}, {"per_page": MAX_RESULTS_PER_PAGE + 1}],
+    ids=["default", "above-max"],
+)
+def test_get_result_by_service_id_returns_max_page_size(session, page_size_kwargs):
+    repository = CheckResultRepository(session)
+    service = make_service(session, make_user(session))
+    expected = make_results(session, service, MAX_RESULTS_PER_PAGE + 5)
+    session.expunge_all()
+
+    first_page = repository.get_result_by_service_id(
+        service.id, page=1, **page_size_kwargs
+    )
+    second_page = repository.get_result_by_service_id(
+        service.id, page=2, **page_size_kwargs
+    )
+
+    assert len(first_page) == MAX_RESULTS_PER_PAGE
+    assert [r.id for r in second_page] == [
+        r.id for r in expected[MAX_RESULTS_PER_PAGE:]
+    ]
 
 
 def test_delete_result(session):

@@ -1,4 +1,5 @@
 import itertools
+from datetime import datetime
 
 from sqlalchemy.orm import Session
 
@@ -47,12 +48,15 @@ def make_check_result(
     *,
     status: ResultStatus = ResultStatus.SUCCESS,
     response_time: float = 0.1,
+    created_at: datetime | None = None,
 ) -> CheckResult:
     check_result = CheckResult(
         service_id=service.id,
         status=status,
         response_time=response_time,
     )
+    if created_at is not None:
+        check_result.created_at = created_at
     session.add(check_result)
     session.flush()
     return check_result

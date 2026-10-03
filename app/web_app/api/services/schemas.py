@@ -3,10 +3,16 @@ from datetime import datetime
 from pydantic import BaseModel, Field, HttpUrl, model_validator
 
 from app.models import ResultStatus, ServiceType
+from app.repositories.check_result_repository import MAX_RESULTS_PER_PAGE
 
 
 class ServiceListQuerySchema(BaseModel):
     is_active: bool | None = None
+
+
+class CheckResultListQuerySchema(BaseModel):
+    page: int = Field(default=1, ge=1)
+    per_page: int = Field(default=MAX_RESULTS_PER_PAGE, ge=1)
 
 
 class ServiceCreateSchema(BaseModel):
@@ -72,6 +78,8 @@ class CheckResultSchema(BaseModel):
 
 class CheckResultListDataSchema(BaseModel):
     results: list[CheckResultSchema]
+    page: int
+    per_page: int
 
 
 class ServiceResponseSchema(BaseModel):

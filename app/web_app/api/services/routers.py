@@ -6,12 +6,16 @@ from app.models import CheckResult, Service
 from app.operations.create_service import CreateService, CreateServiceDTO
 from app.operations.delete_service import DeleteService, DeleteServiceDTO
 from app.operations.update_service import UpdateService, UpdateServiceDTO
-from app.repositories.check_result_repository import CheckResultRepository
+from app.repositories.check_result_repository import (
+    MAX_RESULTS_PER_PAGE,
+    CheckResultRepository,
+)
 from app.repositories.service_repository import ServiceRepository
 from app.web_app.extensions import protected, spec
 
 from ..responses import api_response, not_found
 from .schemas import (
+    CheckResultListQuerySchema,
     CheckResultListResponseSchema,
     CheckResultSchema,
     ServiceCreateSchema,
@@ -136,9 +140,12 @@ def delete_service(service_id):
 @services_bp.route("/<int:service_id>/results", methods=["GET"])
 @protected
 @spec.validate(
-    resp=Response("HTTP_404", HTTP_200=CheckResultListResponseSchema), tags=["services"]
+    query=CheckResultListQuerySchema,
+    resp=Response("HTTP_404", HTTP_200=CheckResultListResponseSchema),
+    tags=["services"],
 )
 def get_service_results(service_id):
+    query: CheckResultListQuerySchema = request.context.query
     service_repo: ServiceRepository = g.service_repo
     check_result_repo: CheckResultRepository = g.check_result_repo
 
@@ -148,9 +155,15 @@ def get_service_results(service_id):
     if service is None:
         return not_found(f"Service with id={service_id} not found in the database")
 
-    results = check_result_repo.get_result_by_service_id(service_id)
+    results = check_result_repo.get_result_by_service_id(
+        service_id, page=query.page, per_page=query.per_page
+    )
     return api_response(
-        data={"results": [serialize_check_result(result) for result in results]}
+        data={
+            "results": [serialize_check_result(result) for result in results],
+            "page": query.page,
+            "per_page": min(query.per_page, MAX_RESULTS_PER_PAGE),
+        }
     )
 
 

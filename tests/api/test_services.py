@@ -1,6 +1,9 @@
+from datetime import UTC, datetime, timedelta
+
 import pytest
 
 from app.models import CheckResult, Service, ServiceType
+from app.repositories.check_result_repository import MAX_RESULTS_PER_PAGE
 from tests.api.api_factories import create_check_result, create_service, create_user
 
 SERVICES_URL = "/api/services"
@@ -378,6 +381,97 @@ def test_get_service_results_returns_results(client, session, logged_in):
     assert item["status"] == "success"
     assert item["response_time"] == 0.25
     assert item["created_at"] is not None
+
+
+def create_results(session, service, count: int) -> list[CheckResult]:
+    """Create `count` results one minute apart; returned newest first."""
+    start = datetime(2026, 1, 1, tzinfo=UTC)
+    results = [
+        create_check_result(session, service, created_at=start + timedelta(minutes=i))
+        for i in range(count)
+    ]
+    return results[::-1]
+
+
+def get_result_ids(response) -> list[int]:
+    return [item["id"] for item in response.get_json()["data"]["results"]]
+
+
+@pytest.mark.parametrize(
+    "query",
+    [{}, {"per_page": MAX_RESULTS_PER_PAGE + 50}],
+    ids=["default", "above-max"],
+)
+def test_get_service_results_returns_max_page_size(client, session, logged_in, query):
+    service = create_service(session, logged_in)
+    expected = create_results(session, service, MAX_RESULTS_PER_PAGE + 1)
+
+    response = client.get(f"{SERVICES_URL}/{service.id}/results", query_string=query)
+
+    assert response.status_code == 200
+    data = response.get_json()["data"]
+    assert data["page"] == 1
+    assert data["per_page"] == MAX_RESULTS_PER_PAGE
+    assert get_result_ids(response) == [r.id for r in expected[:MAX_RESULTS_PER_PAGE]]
+
+
+def test_get_service_results_returns_requested_page(client, session, logged_in):
+    service = create_service(session, logged_in)
+    expected = create_results(session, service, 5)
+
+    response = client.get(
+        f"{SERVICES_URL}/{service.id}/results", query_string={"page": 2, "per_page": 2}
+    )
+
+    assert response.status_code == 200
+    data = response.get_json()["data"]
+    assert data["page"] == 2
+    assert data["per_page"] == 2
+    assert get_result_ids(response) == [r.id for r in expected[2:4]]
+
+
+def test_get_service_results_orders_newest_first(client, session, logged_in):
+    service = create_service(session, logged_in)
+    newer = create_check_result(
+        session, service, created_at=datetime(2026, 1, 2, tzinfo=UTC)
+    )
+    older = create_check_result(
+        session, service, created_at=datetime(2026, 1, 1, tzinfo=UTC)
+    )
+
+    response = client.get(f"{SERVICES_URL}/{service.id}/results")
+
+    assert get_result_ids(response) == [newer.id, older.id]
+
+
+def test_get_service_results_past_last_page_returns_empty_list(
+    client, session, logged_in
+):
+    service = create_service(session, logged_in)
+    create_results(session, service, 2)
+
+    response = client.get(
+        f"{SERVICES_URL}/{service.id}/results", query_string={"page": 5}
+    )
+
+    assert response.status_code == 200
+    assert get_result_ids(response) == []
+
+
+@pytest.mark.parametrize(
+    "query",
+    [{"page": 0}, {"page": -1}, {"per_page": 0}, {"page": "abc"}, {"per_page": "x"}],
+    ids=["zero-page", "negative-page", "zero-per-page", "text-page", "text-per-page"],
+)
+def test_get_service_results_with_invalid_pagination_returns_400(
+    client, session, logged_in, query
+):
+    service = create_service(session, logged_in)
+
+    response = client.get(f"{SERVICES_URL}/{service.id}/results", query_string=query)
+
+    assert response.status_code == 400
+    assert response.get_json()["error"] == "Bad Request"
 
 
 @pytest.mark.usefixtures("logged_in")

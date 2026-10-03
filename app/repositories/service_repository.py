@@ -22,7 +22,9 @@ class ServiceRepository(BaseRepository):
         if is_active is not None:
             query = query.filter_by(is_active=is_active)
 
-        query = query.filter_by(user_id=user_id)
+        query = query.filter_by(user_id=user_id).order_by(
+            Service.created_at, Service.id
+        )
         services = query.all()
         for service in services:
             self.db_session.expunge(service)

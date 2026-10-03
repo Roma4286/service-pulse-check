@@ -156,6 +156,7 @@ h1 {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 20px;
+    align-items: start;
 }
 
 .service-card {
@@ -176,7 +177,6 @@ h1 {
     border-color: #d93025;
 }
 
-/* Fade the content only, so the status border keeps its full color. */
 .service-card--inactive > * {
     opacity: 0.55;
 }
@@ -298,4 +298,87 @@ h1 {
 .new-service-tile__plus {
     font-size: 36px;
     line-height: 1;
+}
+
+/* New service form */
+
+.service-form {
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    border: 2px solid #000;
+    border-radius: 8px;
+}
+
+.service-form__title {
+    font-size: 18px;
+    margin-bottom: 15px;
+}
+
+.service-form .input-group {
+    margin-bottom: 15px;
+}
+
+.service-form select {
+    width: 100%;
+    padding: 10px 0;
+    border: none;
+    border-bottom: 1px solid #ccc;
+    font-size: 16px;
+    background: transparent;
+    outline: none;
+}
+
+.service-form select:focus {
+    border-bottom: 1px solid #000;
+}
+
+.service-form__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.field-error {
+    margin-top: 5px;
+    font-size: 12px;
+    color: #c00;
+}
+
+.checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.service-form__actions {
+    display: flex;
+    gap: 10px;
+}
+
+.service-form__actions button {
+    flex: 1;
+}
+
+.btn-primary {
+    padding: 10px 20px;
+    background-color: #ffcc00;
+    color: #000;
+    border: none;
+    font-size: 13px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    cursor: pointer;
+}
+
+.btn-primary:hover {
+    background-color: #e6b800;
+}
+
+.btn-primary:disabled {
+    cursor: progress;
+    opacity: 0.6;
 }

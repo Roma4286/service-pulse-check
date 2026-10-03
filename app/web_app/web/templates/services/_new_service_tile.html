@@ -1,4 +1,8 @@
-<button type="button" class="new-service-tile" id="new-service-tile">
+<button type="button"
+        class="new-service-tile"
+        hx-get="{{ url_for('web.services.new_form') }}"
+        hx-target="this"
+        hx-swap="outerHTML">
     <span class="new-service-tile__plus">+</span>
     <span>New service</span>
 </button>

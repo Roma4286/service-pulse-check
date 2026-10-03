@@ -1,0 +1,67 @@
+{#
+    "New service" form, shown in place of the "+" tile.
+    form   - submitted values to refill the inputs ({} for an empty form)
+    errors - {field: message}; "__all__" holds errors not tied to one field
+#}
+{% macro field_error(name) %}
+    {% if errors.get(name) %}<p class="field-error">{{ errors[name] }}</p>{% endif %}
+{% endmacro %}
+
+<form class="service-form"
+      hx-post="{{ url_for('web.services.create') }}"
+      hx-target="this"
+      hx-swap="outerHTML"
+      hx-disabled-elt="find button[type=submit]">
+    <h2 class="service-form__title">New service</h2>
+    {% if errors.get("__all__") %}<p class="form-error">{{ errors["__all__"] }}</p>{% endif %}
+
+    <div class="input-group">
+        <label for="service-name">Name</label>
+        <input type="text" id="service-name" name="name" value="{{ form.get('name', '') }}" required autofocus>
+        {{ field_error("name") }}
+    </div>
+
+    <div class="input-group">
+        <label for="service-url">URL</label>
+        <input type="url" id="service-url" name="url" value="{{ form.get('url', '') }}" placeholder="https://example.com" required>
+        {{ field_error("url") }}
+    </div>
+
+    <div class="input-group">
+        <label for="service-type">Type</label>
+        <select id="service-type" name="type">
+            {% for value, label in [("http", "HTTP"), ("tcp", "TCP")] %}
+                <option value="{{ value }}" {% if form.get('type', 'http') == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        {{ field_error("type") }}
+    </div>
+
+    <div class="service-form__row">
+        <div class="input-group">
+            <label for="service-interval">Interval, s</label>
+            <input type="number" id="service-interval" name="interval_in_seconds" min="1" step="1" value="{{ form.get('interval_in_seconds', 10) }}">
+            {{ field_error("interval_in_seconds") }}
+        </div>
+        <div class="input-group">
+            <label for="service-timeout">Timeout, s</label>
+            <input type="number" id="service-timeout" name="timeout_in_seconds" min="0.1" step="0.1" value="{{ form.get('timeout_in_seconds', 5.0) }}">
+            {{ field_error("timeout_in_seconds") }}
+        </div>
+    </div>
+
+    <label class="checkbox">
+        {# A fresh form starts active; a resubmitted one keeps what the user chose. #}
+        <input type="checkbox" name="is_active" {% if not form or form.get('is_active') %}checked{% endif %}>
+        Active
+    </label>
+
+    <div class="service-form__actions">
+        <button type="submit" class="btn-primary">Create</button>
+        <button type="button"
+                class="btn-outline"
+                hx-get="{{ url_for('web.services.new_tile') }}"
+                hx-target="closest .service-form"
+                hx-swap="outerHTML">Cancel</button>
+    </div>
+</form>

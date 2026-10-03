@@ -1,11 +1,15 @@
-from flask import Blueprint, abort, g, render_template, request
+from flask import Blueprint, abort, current_app, g, render_template, request
 from flask_jwt_extended import get_jwt_identity
 
 from app.models import CheckResult, Service
+from app.operations.base_service_error import BaseServiceError
+from app.operations.create_service import CreateService, CreateServiceDTO
 from app.operations.update_service import UpdateService, UpdateServiceDTO
 from app.repositories.check_result_repository import CheckResultRepository
 from app.repositories.service_repository import ServiceRepository
 from app.web_app.extensions import protected
+
+from .forms import parse_service_create_form
 
 services_bp = Blueprint("services", __name__, url_prefix="/services")
 
@@ -49,3 +53,60 @@ def set_active(service_id):
         service=service,
         last_results=get_last_results([service]),
     ) + render_template("_account_stats.html", services=services, oob=True)
+
+
+@services_bp.get("/new")
+@protected
+def new_form():
+    return render_template("services/_service_form.html", form={}, errors={})
+
+
+@services_bp.get("/new-tile")
+@protected
+def new_tile():
+    return render_template("services/_new_service_tile.html")
+
+
+@services_bp.post("")
+@protected
+def create():
+    user_id = int(get_jwt_identity())
+    service_repo: ServiceRepository = g.service_repo
+    operation: CreateService = g.create_service
+
+    body, errors = parse_service_create_form(request.form)
+    if body is None:
+        return render_template(
+            "services/_service_form.html", form=request.form, errors=errors
+        )
+
+    try:
+        service = operation(
+            dto=CreateServiceDTO(
+                name=body.name,
+                url=str(body.url),
+                type=body.type,
+                is_active=body.is_active,
+                user_id=user_id,
+                interval_in_seconds=body.interval_in_seconds,
+                timeout_in_seconds=body.timeout_in_seconds,
+            )
+        )
+    except BaseServiceError as e:
+        current_app.logger.exception("Failed to create service")
+        return render_template(
+            "services/_service_form.html",
+            form=request.form,
+            errors={"__all__": e.message},
+        )
+
+    services = service_repo.get_services(user_id=user_id)
+    return (
+        render_template(
+            "services/_service_card.html",
+            service=service,
+            last_results=get_last_results([service]),
+        )
+        + render_template("services/_new_service_tile.html")
+        + render_template("_account_stats.html", services=services, oob=True)
+    )

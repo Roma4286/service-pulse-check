@@ -1,0 +1,15 @@
+<article class="service-card{% if not service.is_active %} service-card--inactive{% endif %}" id="service-{{ service.id }}">
+    <div class="service-card__header">
+        <h2 class="service-card__name">{{ service.name }}</h2>
+        <span class="service-card__type">{{ service.type.value | upper }}</span>
+    </div>
+    <p class="service-card__url">{{ service.url }}</p>
+    <p class="service-card__meta">Every {{ service.interval_in_seconds }}s · timeout {{ service.timeout_in_seconds }}s</p>
+    <div class="service-card__footer">
+        {% if service.is_active %}
+            <span class="status status--active">Active</span>
+        {% else %}
+            <span class="status status--inactive">Paused</span>
+        {% endif %}
+    </div>
+</article>

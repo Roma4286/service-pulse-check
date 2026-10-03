@@ -65,7 +65,7 @@ h1 {
     border-bottom: 1px solid #000;
 }
 
-button {
+.auth-form button {
     width: 100%;
     padding: 15px;
     background-color: #ffcc00;
@@ -78,7 +78,7 @@ button {
     margin-top: 10px;
 }
 
-button:hover {
+.auth-form button:hover {
     background-color: #e6b800;
 }
 
@@ -98,4 +98,153 @@ button:hover {
     color: #000;
     text-decoration: underline;
     font-weight: bold;
+}
+
+/* Home page */
+
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+    border-bottom: 1px solid #eee;
+}
+
+.account {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.account-name {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.account-stats {
+    font-size: 13px;
+    color: #666;
+}
+
+.btn-outline {
+    padding: 10px 20px;
+    background: transparent;
+    color: #000;
+    border: 1px solid #000;
+    font-size: 13px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    cursor: pointer;
+}
+
+.btn-outline:hover {
+    background-color: #000;
+    color: #fff;
+}
+
+.services {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+.services h1 {
+    text-align: center;
+}
+
+.services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.service-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 180px;
+    padding: 20px;
+    border: 1px solid #ddd;
+}
+
+.service-card--inactive {
+    opacity: 0.55;
+}
+
+.service-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+}
+
+.service-card__name {
+    font-size: 18px;
+    overflow-wrap: anywhere;
+}
+
+.service-card__type {
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    padding: 2px 6px;
+    border: 1px solid #000;
+}
+
+.service-card__url {
+    font-size: 14px;
+    color: #333;
+    overflow-wrap: anywhere;
+}
+
+.service-card__meta {
+    font-size: 13px;
+    color: #666;
+}
+
+.service-card__footer {
+    margin-top: auto;
+}
+
+.status {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    padding: 4px 8px;
+}
+
+.status--active {
+    background-color: #ffcc00;
+}
+
+.status--inactive {
+    background-color: #eee;
+    color: #666;
+}
+
+.new-service-tile {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    min-height: 180px;
+    background: transparent;
+    border: 2px dashed #ccc;
+    color: #666;
+    font-size: 14px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    cursor: pointer;
+}
+
+.new-service-tile:hover {
+    border-color: #000;
+    color: #000;
+}
+
+.new-service-tile__plus {
+    font-size: 36px;
+    line-height: 1;
 }

@@ -1,13 +1,27 @@
 {% extends "base.html" %}
 
-{% block title %}Home{% endblock %}
-{% block body_class %}auth-page{% endblock %}
+{% block title %}Services{% endblock %}
 
 {% block content %}
-    <div class="auth-container">
-        <h1>Hello, {{ user.username }}</h1>
+    <header class="topbar">
+        <div class="account">
+            <span class="account-name">{{ user.username }}</span>
+            <span class="account-stats">
+                {{ services | length }} services · {{ services | selectattr("is_active") | list | length }} active
+            </span>
+        </div>
         <form method="post" action="{{ url_for('web.auth.logout') }}">
-            <button type="submit">Logout</button>
+            <button type="submit" class="btn-outline">Logout</button>
         </form>
-    </div>
+    </header>
+
+    <main class="services">
+        <h1>Services</h1>
+        <div class="services-grid" id="services-grid">
+            {% for service in services %}
+                {% include "services/_service_card.html" %}
+            {% endfor %}
+            {% include "services/_new_service_tile.html" %}
+        </div>
+    </main>
 {% endblock %}

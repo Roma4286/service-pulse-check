@@ -2,11 +2,24 @@ from app.models import CheckResult, ResultStatus
 
 from .base_repository import BaseRepository
 
+MAX_RESULTS_PER_PAGE = 100
+
 
 class CheckResultRepository(BaseRepository):
-    def get_result_by_service_id(self, service_id: int) -> list[CheckResult]:
+    def get_result_by_service_id(
+        self,
+        service_id: int,
+        page: int = 1,
+        per_page: int = MAX_RESULTS_PER_PAGE,
+    ) -> list[CheckResult]:
+        per_page = min(per_page, MAX_RESULTS_PER_PAGE)
         results = (
-            self.db_session.query(CheckResult).filter_by(service_id=service_id).all()
+            self.db_session.query(CheckResult)
+            .filter_by(service_id=service_id)
+            .order_by(CheckResult.created_at.desc(), CheckResult.id.desc())
+            .offset((page - 1) * per_page)
+            .limit(per_page)
+            .all()
         )
         for result in results:
             self.db_session.expunge(result)

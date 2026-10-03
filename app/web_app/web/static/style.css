@@ -164,11 +164,20 @@ h1 {
     gap: 10px;
     min-height: 180px;
     padding: 20px;
-    border: 1px solid #ddd;
+    border: 2px solid #ddd;
     border-radius: 8px;
 }
 
-.service-card--inactive {
+.service-card--success {
+    border-color: #2e9e4f;
+}
+
+.service-card--fail {
+    border-color: #d93025;
+}
+
+/* Fade the content only, so the status border keeps its full color. */
+.service-card--inactive > * {
     opacity: 0.55;
 }
 

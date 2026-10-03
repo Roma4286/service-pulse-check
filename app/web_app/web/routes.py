@@ -6,6 +6,7 @@ from app.repositories.user_repository import UserRepository
 from app.web_app.extensions import protected
 
 from . import web_bp
+from .services.routes import get_last_results
 
 
 @web_bp.route("/")
@@ -19,4 +20,9 @@ def home():
         return redirect(url_for("web.auth.login"))
 
     services = service_repo.get_services(user_id=user.id)
-    return render_template("home.html", user=user, services=services)
+    return render_template(
+        "home.html",
+        user=user,
+        services=services,
+        last_results=get_last_results(services),
+    )

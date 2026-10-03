@@ -1,4 +1,9 @@
-<article class="service-card{% if not service.is_active %} service-card--inactive{% endif %}" id="service-{{ service.id }}">
+{# Border color reflects the latest check: none → gray, success → green, fail → red. #}
+{% set last_result = last_results.get(service.id) %}
+<article class="service-card
+                {%- if last_result %} service-card--{{ last_result.status.value }}{% endif %}
+                {%- if not service.is_active %} service-card--inactive{% endif %}"
+         id="service-{{ service.id }}">
     <div class="service-card__header">
         <h2 class="service-card__name">{{ service.name }}</h2>
         <span class="service-card__type">{{ service.type.value | upper }}</span>

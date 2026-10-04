@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Service Pulse Check{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('web.static', filename='style.css') }}">
+    <meta name="htmx-config" content='{"responseHandling": [{"code": "204", "swap": false}, {"code": "[23]..", "swap": true}, {"code": "[45]..", "swap": true, "error": true}]}'>
     {# htmx 2.0.11 #}
     <script src="{{ url_for('web.static', filename='htmx.min.js') }}" defer></script>
 </head>
@@ -12,5 +13,6 @@
 <body class="{% block body_class %}{% endblock %}"
       {% if csrf_token %}hx-headers='{{ {config.JWT_ACCESS_CSRF_HEADER_NAME: csrf_token} | tojson }}'{% endif %}>
     {% block content %}{% endblock %}
+    <div class="toasts" id="toasts" aria-live="polite"></div>
 </body>
 </html>

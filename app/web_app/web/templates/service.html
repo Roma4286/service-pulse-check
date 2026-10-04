@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}{{ service.name }}{% endblock %}
+
+{% block content %}
+    <main class="service-page">
+        <a class="back-link" href="{{ url_for('web.home') }}">← Services</a>
+        <h1>{{ service.name }}</h1>
+        <p class="service-page__placeholder">Service details will be here soon.</p>
+    </main>
+{% endblock %}

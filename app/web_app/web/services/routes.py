@@ -26,6 +26,20 @@ def get_last_results(services: list[Service]) -> dict[int, CheckResult | None]:
     return last_results
 
 
+@services_bp.get("/<int:service_id>")
+@protected
+def detail(service_id):
+    service_repo: ServiceRepository = g.service_repo
+
+    service = service_repo.get_service_by_id(
+        user_id=int(get_jwt_identity()), service_id=service_id
+    )
+    if service is None:
+        abort(404)
+
+    return render_template("service.html", service=service)
+
+
 @services_bp.post("/<int:service_id>/active")
 @protected
 def set_active(service_id):

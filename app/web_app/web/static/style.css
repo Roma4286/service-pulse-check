@@ -142,6 +142,11 @@ h1 {
     color: #fff;
 }
 
+.btn-logout:hover {
+    background-color: #d93025;
+    border-color: #d93025;
+}
+
 .services {
     max-width: 960px;
     margin: 0 auto;

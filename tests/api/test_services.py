@@ -237,6 +237,34 @@ def test_create_service_returns_201_and_schedules(
 
 
 @pytest.mark.parametrize(
+    "url",
+    ["db.example.com:5432", "tcp://db.example.com:5432", "  10.0.0.5:6379  "],
+    ids=["host-port", "tcp-scheme", "surrounding-spaces"],
+)
+def test_create_tcp_service_accepts_host_and_port(
+    client, session, scheduler, logged_in, url
+):
+    response = client.post(SERVICES_URL, json=service_payload(type="tcp", url=url))
+
+    assert response.status_code == 201
+    data = response.get_json()["data"]
+    assert data["type"] == "tcp"
+    assert data["url"] == url.strip()
+    assert get_stored_service(session, data["id"]).url == url.strip()
+    scheduler.create_task.assert_called_once()
+
+
+@pytest.mark.usefixtures("logged_in")
+def test_create_http_service_normalizes_url(client):
+    response = client.post(
+        SERVICES_URL, json=service_payload(url="https://API.example.com")
+    )
+
+    assert response.status_code == 201
+    assert response.get_json()["data"]["url"] == "https://api.example.com/"
+
+
+@pytest.mark.parametrize(
     "overrides",
     [
         {"url": "not-a-url"},
@@ -245,6 +273,13 @@ def test_create_service_returns_201_and_schedules(
         {"timeout_in_seconds": -1},
         {"interval_in_seconds": 10, "timeout_in_seconds": 20.0},
         {"name": None},
+        {"url": "db.example.com:5432"},
+        {"type": "tcp", "url": "db.example.com"},
+        {"type": "tcp", "url": "db.example.com:port"},
+        {"type": "tcp", "url": "db.example.com:0"},
+        {"type": "tcp", "url": "db.example.com:70000"},
+        {"type": "tcp", "url": ":5432"},
+        {"type": "tcp", "url": "https://db.example.com"},
     ],
     ids=[
         "bad-url",
@@ -253,6 +288,13 @@ def test_create_service_returns_201_and_schedules(
         "negative-timeout",
         "timeout-above-interval",
         "no-name",
+        "http-with-host-port",
+        "tcp-without-port",
+        "tcp-non-numeric-port",
+        "tcp-port-zero",
+        "tcp-port-out-of-range",
+        "tcp-without-host",
+        "tcp-url-without-port",
     ],
 )
 @pytest.mark.usefixtures("logged_in")

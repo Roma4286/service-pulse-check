@@ -84,7 +84,7 @@ def create():
         service = operation(
             dto=CreateServiceDTO(
                 name=body.name,
-                url=str(body.url),
+                url=body.url,
                 type=body.type,
                 is_active=body.is_active,
                 user_id=user_id,

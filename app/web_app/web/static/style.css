@@ -339,6 +339,12 @@ h1 {
     gap: 15px;
 }
 
+.field-hint {
+    margin-top: 5px;
+    font-size: 12px;
+    color: #999;
+}
+
 .field-error {
     margin-top: 5px;
     font-size: 12px;

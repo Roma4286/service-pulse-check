@@ -22,12 +22,6 @@
     </div>
 
     <div class="input-group">
-        <label for="service-url">URL</label>
-        <input type="url" id="service-url" name="url" value="{{ form.get('url', '') }}" placeholder="https://example.com" required>
-        {{ field_error("url") }}
-    </div>
-
-    <div class="input-group">
         <label for="service-type">Type</label>
         <select id="service-type" name="type">
             {% for value, label in [("http", "HTTP"), ("tcp", "TCP")] %}
@@ -35,6 +29,14 @@
             {% endfor %}
         </select>
         {{ field_error("type") }}
+    </div>
+
+    <div class="input-group">
+        <label for="service-url">Address</label>
+        {# type="text", not "url": the browser would reject a TCP host:port. #}
+        <input type="text" id="service-url" name="url" value="{{ form.get('url', '') }}" required>
+        <p class="field-hint">HTTP: https://example.com<br>TCP: db.example.com:5432</p>
+        {{ field_error("url") }}
     </div>
 
     <div class="service-form__row">

@@ -176,7 +176,7 @@ h1 {
     transition: box-shadow 0.15s;
 }
 
-.service-card:hover {
+.service-card:not(.service-card--page):hover {
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
 }
 
@@ -216,7 +216,7 @@ h1 {
     outline-offset: 2px;
 }
 
-.service-card:hover .service-card__name {
+.service-card:not(.service-card--page):hover .service-card__name {
     text-decoration: underline;
 }
 
@@ -440,6 +440,135 @@ h1 {
     color: #000;
 }
 
-.service-page__placeholder {
-    color: #999;
+.service-card--page {
+    min-height: 0;
+    margin-bottom: 30px;
+}
+
+.service-page__danger {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.btn-danger {
+    padding: 10px 20px;
+    background: transparent;
+    color: #d93025;
+    border: 1px solid #d93025;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    cursor: pointer;
+}
+
+.btn-danger:hover {
+    background-color: #d93025;
+    color: #fff;
+}
+
+.btn-danger:disabled {
+    cursor: progress;
+    opacity: 0.6;
+}
+
+/* Uptime bar */
+
+.uptime {
+    padding: 20px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+}
+
+.uptime__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.uptime__title {
+    font-size: 18px;
+}
+
+.uptime__icon {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.uptime__icon--up {
+    background-color: #2e9e4f;
+}
+
+.uptime__icon--down {
+    background-color: #d93025;
+}
+
+.uptime__icon--unknown {
+    background-color: #bbb;
+}
+
+.uptime__bars {
+    display: flex;
+    gap: 2px;
+    height: 34px;
+}
+
+.uptime__bar {
+    flex: 1;
+    min-width: 0;
+    border-radius: 1px;
+    background-color: #e5e5e5;
+}
+
+.uptime__bar--success {
+    background-color: #8fd19e;
+}
+
+.uptime__bar--fail {
+    background-color: #e8837b;
+}
+
+.uptime__bar:hover {
+    opacity: 0.7;
+}
+
+.uptime__legend {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+    font-size: 13px;
+    color: #666;
+    white-space: nowrap;
+}
+
+.uptime__line {
+    flex: 1;
+    height: 1px;
+    background-color: #ccc;
+}
+
+.uptime__state {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #666;
+}
+
+.uptime__state--up {
+    color: #2e9e4f;
+}
+
+.uptime__state--down {
+    color: #d93025;
 }

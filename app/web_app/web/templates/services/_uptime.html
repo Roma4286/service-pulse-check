@@ -1,0 +1,34 @@
+{#
+    Uptime bar: one bar per check, oldest on the left, gray bars where there is no data yet.
+    uptime - app.web_app.web.services.uptime.Uptime
+#}
+{% set state = {
+    "success": ("up", "✓", "Operational"),
+    "fail": ("down", "✕", "Down"),
+}.get(uptime.last_status.value if uptime.last_status else none, ("unknown", "?", "No data")) %}
+<section class="uptime">
+    <div class="uptime__header">
+        <h2 class="uptime__title">Uptime</h2>
+        <span class="uptime__icon uptime__icon--{{ state[0] }}" title="{{ state[2] }}">{{ state[1] }}</span>
+    </div>
+
+    <div class="uptime__bars">
+        {% for _ in range(uptime.empty_slots) %}
+            <span class="uptime__bar" title="No data"></span>
+        {% endfor %}
+        {% for result in uptime.results %}
+            <span class="uptime__bar uptime__bar--{{ result.status.value }}"
+                  title="{{ result.created_at.strftime('%Y-%m-%d %H:%M:%S') }} · {{ result.status.value }} · {{ (result.response_time * 1000) | round | int }} ms"></span>
+        {% endfor %}
+    </div>
+
+    <div class="uptime__legend">
+        <span>{{ uptime.slots }} checks ago</span>
+        <span class="uptime__line"></span>
+        <span>{{ uptime.percent ~ " % uptime" if uptime.percent is not none else "No checks yet" }}</span>
+        <span class="uptime__line"></span>
+        <span>Latest check</span>
+    </div>
+
+    <p class="uptime__state uptime__state--{{ state[0] }}">{{ state[2] }}</p>
+</section>

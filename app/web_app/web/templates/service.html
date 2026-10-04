@@ -5,7 +5,19 @@
 {% block content %}
     <main class="service-page">
         <a class="back-link" href="{{ url_for('web.home') }}">← Services</a>
-        <h1>{{ service.name }}</h1>
-        <p class="service-page__placeholder">Service details will be here soon.</p>
+
+        {% with on_service_page=True %}
+            {% include "services/_service_card.html" %}
+        {% endwith %}
+
+        {% include "services/_uptime.html" %}
+
+        <div class="service-page__danger">
+            <button type="button"
+                    class="btn-danger"
+                    hx-post="{{ url_for('web.services.delete', service_id=service.id) }}"
+                    hx-confirm="Delete service “{{ service.name }}” and all its check results?"
+                    hx-disabled-elt="this">Delete service</button>
+        </div>
     </main>
 {% endblock %}

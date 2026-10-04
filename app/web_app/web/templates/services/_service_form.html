@@ -1,8 +1,3 @@
-{#
-    "New service" form, shown in place of the "+" tile.
-    form   - submitted values to refill the inputs ({} for an empty form)
-    errors - {field: message}; "__all__" holds errors not tied to one field
-#}
 {% macro field_error(name) %}
     {% if errors.get(name) %}<p class="field-error">{{ errors[name] }}</p>{% endif %}
 {% endmacro %}
@@ -14,8 +9,8 @@
       hx-disabled-elt="find button[type=submit]">
     <div hidden
          hx-get="{{ url_for('web.services.new_tile') }}"
-         hx-trigger="click[!this.closest('.service-form').contains(target)] from:document,
-                     keyup[key=='Escape'] from:document"
+         hx-trigger="click[!this.closest('.service-form').contains(target)] from:body,
+                     keyup[key=='Escape'] from:body"
          hx-target="closest .service-form"
          hx-swap="outerHTML"
          hx-sync="closest .service-form:drop"></div>

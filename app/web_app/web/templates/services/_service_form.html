@@ -12,6 +12,13 @@
       hx-target="this"
       hx-swap="outerHTML"
       hx-disabled-elt="find button[type=submit]">
+    <div hidden
+         hx-get="{{ url_for('web.services.new_tile') }}"
+         hx-trigger="click[!this.closest('.service-form').contains(target)] from:document,
+                     keyup[key=='Escape'] from:document"
+         hx-target="closest .service-form"
+         hx-swap="outerHTML"
+         hx-sync="closest .service-form:drop"></div>
     <h2 class="service-form__title">New service</h2>
     {% if errors.get("__all__") %}<p class="form-error">{{ errors["__all__"] }}</p>{% endif %}
 

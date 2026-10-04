@@ -15,6 +15,7 @@ web_bp.register_blueprint(auth_bp)
 web_bp.register_blueprint(services_bp)
 
 from . import (
+    cache_control,  # noqa: F401 — registers the Cache-Control hook on web_bp
     error_handlers,  # noqa: F401 — registers error handlers on web_bp
     routes,  # noqa: F401 — registers page routes on web_bp
 )

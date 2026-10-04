@@ -1,6 +1,5 @@
 from flask import (
     Blueprint,
-    abort,
     current_app,
     g,
     render_template,
@@ -22,6 +21,7 @@ from app.repositories.check_result_repository import (
 from app.repositories.service_repository import ServiceRepository
 from app.web_app.extensions import protected
 
+from ..responses import htmx_redirect, not_found
 from .forms import parse_service_create_form, parse_service_update_form
 from .uptime import build_uptime
 
@@ -49,7 +49,7 @@ def detail(service_id):
         user_id=int(get_jwt_identity()), service_id=service_id
     )
     if service is None:
-        abort(404)
+        return not_found()
 
     check_result_repo: CheckResultRepository = g.check_result_repo
     results = check_result_repo.get_result_by_service_id(
@@ -73,9 +73,9 @@ def delete(service_id):
             dto=DeleteServiceDTO(user_id=int(get_jwt_identity()), service_id=service_id)
         )
     except ServiceNotFoundError:
-        abort(404)
+        return not_found()
 
-    return "", 200, {"HX-Redirect": url_for("web.home")}
+    return htmx_redirect(url_for("web.home"))
 
 
 @services_bp.post("/<int:service_id>/active")
@@ -87,7 +87,7 @@ def set_active(service_id):
     operation: UpdateService = g.update_service
 
     if service_repo.get_service_by_id(user_id=user_id, service_id=service_id) is None:
-        abort(404)
+        return not_found()
 
     service = operation(
         dto=UpdateServiceDTO(
@@ -116,14 +116,13 @@ def set_active(service_id):
 @services_bp.get("/<int:service_id>/edit")
 @protected
 def edit_form(service_id):
-    """htmx: the "edit service" modal, appended to the page body."""
     service_repo: ServiceRepository = g.service_repo
 
     service = service_repo.get_service_by_id(
         user_id=int(get_jwt_identity()), service_id=service_id
     )
     if service is None:
-        abort(404)
+        return not_found()
 
     form = {
         "name": service.name,
@@ -145,7 +144,7 @@ def edit(service_id):
 
     service = service_repo.get_service_by_id(user_id=user_id, service_id=service_id)
     if service is None:
-        abort(404)
+        return not_found()
 
     def form_with_errors(errors: dict[str, str]) -> str:
         return render_template(
@@ -173,7 +172,7 @@ def edit(service_id):
     except TimeoutGreaterThanIntervalError as e:
         return form_with_errors({"timeout_in_seconds": e.message})
     except ServiceNotFoundError:
-        abort(404)
+        return not_found()
     except BaseServiceError as e:
         current_app.logger.exception("Failed to update service")
         return form_with_errors({"__all__": e.message})

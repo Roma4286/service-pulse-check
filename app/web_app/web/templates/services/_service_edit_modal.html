@@ -1,0 +1,48 @@
+{% macro field_error(name) %}
+    {% if errors.get(name) %}<p class="field-error">{{ errors[name] }}</p>{% endif %}
+{% endmacro %}
+
+<div class="modal"
+     hx-on:click="if (event.target === this) this.remove()"
+     hx-on:keydown="if (event.key === 'Escape') this.remove()">
+    <form class="modal__dialog service-form"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="edit-service-title"
+          hx-post="{{ url_for('web.services.edit', service_id=service.id) }}"
+          hx-target="closest .modal"
+          hx-swap="outerHTML"
+          hx-disabled-elt="find button[type=submit]">
+        <h2 class="service-form__title" id="edit-service-title">Edit service</h2>
+        {% if errors.get("__all__") %}<p class="form-error">{{ errors["__all__"] }}</p>{% endif %}
+
+        <div class="input-group">
+            <label for="edit-service-name">Name</label>
+            <input type="text" id="edit-service-name" name="name" value="{{ form.get('name', '') }}" required autofocus>
+            {{ field_error("name") }}
+        </div>
+
+        <div class="service-form__row">
+            <div class="input-group">
+                <label for="edit-service-interval">Interval, s</label>
+                <input type="number" id="edit-service-interval" name="interval_in_seconds" min="1" step="1" value="{{ form.get('interval_in_seconds', '') }}" required>
+                {{ field_error("interval_in_seconds") }}
+            </div>
+            <div class="input-group">
+                <label for="edit-service-timeout">Timeout, s</label>
+                <input type="number" id="edit-service-timeout" name="timeout_in_seconds" min="0.1" step="0.1" value="{{ form.get('timeout_in_seconds', '') }}" required>
+                {{ field_error("timeout_in_seconds") }}
+            </div>
+        </div>
+
+        <label class="checkbox">
+            <input type="checkbox" name="is_active" {% if form.get('is_active') %}checked{% endif %}>
+            Active
+        </label>
+
+        <div class="service-form__actions">
+            <button type="submit" class="btn-primary">Save</button>
+            <button type="button" class="btn-outline" hx-on:click="this.closest('.modal').remove()">Cancel</button>
+        </div>
+    </form>
+</div>

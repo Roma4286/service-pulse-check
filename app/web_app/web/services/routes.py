@@ -13,7 +13,7 @@ from app.models import CheckResult, Service
 from app.operations.base_service_error import BaseServiceError
 from app.operations.create_service import CreateService, CreateServiceDTO
 from app.operations.delete_service import DeleteService, DeleteServiceDTO
-from app.operations.errors import ServiceNotFoundError
+from app.operations.errors import ServiceNotFoundError, TimeoutGreaterThanIntervalError
 from app.operations.update_service import UpdateService, UpdateServiceDTO
 from app.repositories.check_result_repository import (
     MAX_RESULTS_PER_PAGE,
@@ -22,7 +22,7 @@ from app.repositories.check_result_repository import (
 from app.repositories.service_repository import ServiceRepository
 from app.web_app.extensions import protected
 
-from .forms import parse_service_create_form
+from .forms import parse_service_create_form, parse_service_update_form
 from .uptime import build_uptime
 
 services_bp = Blueprint("services", __name__, url_prefix="/services")
@@ -111,6 +111,80 @@ def set_active(service_id):
 
     services = service_repo.get_services(user_id=user_id)
     return card + render_template("_account_stats.html", services=services, oob=True)
+
+
+@services_bp.get("/<int:service_id>/edit")
+@protected
+def edit_form(service_id):
+    """htmx: the "edit service" modal, appended to the page body."""
+    service_repo: ServiceRepository = g.service_repo
+
+    service = service_repo.get_service_by_id(
+        user_id=int(get_jwt_identity()), service_id=service_id
+    )
+    if service is None:
+        abort(404)
+
+    form = {
+        "name": service.name,
+        "interval_in_seconds": service.interval_in_seconds,
+        "timeout_in_seconds": service.timeout_in_seconds,
+        "is_active": service.is_active,
+    }
+    return render_template(
+        "services/_service_edit_modal.html", service=service, form=form, errors={}
+    )
+
+
+@services_bp.post("/<int:service_id>/edit")
+@protected
+def edit(service_id):
+    user_id = int(get_jwt_identity())
+    service_repo: ServiceRepository = g.service_repo
+    operation: UpdateService = g.update_service
+
+    service = service_repo.get_service_by_id(user_id=user_id, service_id=service_id)
+    if service is None:
+        abort(404)
+
+    def form_with_errors(errors: dict[str, str]) -> str:
+        return render_template(
+            "services/_service_edit_modal.html",
+            service=service,
+            form=request.form,
+            errors=errors,
+        )
+
+    body, errors = parse_service_update_form(request.form)
+    if body is None:
+        return form_with_errors(errors)
+
+    try:
+        service = operation(
+            dto=UpdateServiceDTO(
+                service_id=service_id,
+                user_id=user_id,
+                name=body.name,
+                is_active=body.is_active,
+                interval_in_seconds=body.interval_in_seconds,
+                timeout_in_seconds=body.timeout_in_seconds,
+            )
+        )
+    except TimeoutGreaterThanIntervalError as e:
+        return form_with_errors({"timeout_in_seconds": e.message})
+    except ServiceNotFoundError:
+        abort(404)
+    except BaseServiceError as e:
+        current_app.logger.exception("Failed to update service")
+        return form_with_errors({"__all__": e.message})
+
+    return render_template(
+        "services/_service_card.html",
+        service=service,
+        last_results=get_last_results([service]),
+        on_service_page=True,
+        oob=True,
+    )
 
 
 @services_bp.get("/new")

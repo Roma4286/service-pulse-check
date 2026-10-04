@@ -12,7 +12,12 @@
 
         {% include "services/_uptime.html" %}
 
-        <div class="service-page__danger">
+        <div class="service-page__actions">
+            <button type="button"
+                    class="btn-edit"
+                    hx-get="{{ url_for('web.services.edit_form', service_id=service.id) }}"
+                    hx-target="body"
+                    hx-swap="beforeend">Edit service</button>
             <button type="button"
                     class="btn-danger"
                     hx-post="{{ url_for('web.services.delete', service_id=service.id) }}"

@@ -1,17 +1,12 @@
-{#
-    Service card, used on the home page and (with on_service_page=True) at the top
-    of the service page, where it does not link anywhere.
-    Border color reflects the latest check: none → gray, success → green, fail → red.
-#}
 {% set on_page = on_service_page | default(false) %}
 {% set last_result = last_results.get(service.id) %}
 <article class="service-card
                 {%- if last_result %} service-card--{{ last_result.status.value }}{% endif %}
                 {%- if not service.is_active %} service-card--inactive{% endif %}
                 {%- if on_page %} service-card--page{% endif %}"
-         id="service-{{ service.id }}">
+         id="service-{{ service.id }}"
+         {%- if oob | default(false) %} hx-swap-oob="true"{% endif %}>
     {% if not on_page %}
-        {# Invisible layer over the whole card: everything except the switch opens the service page. #}
         <a class="service-card__link"
            href="{{ url_for('web.services.detail', service_id=service.id) }}"
            aria-label="Open {{ service.name }}"></a>

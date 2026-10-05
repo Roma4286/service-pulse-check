@@ -1,5 +1,4 @@
 name: "service_pulse_check"
-version: "3.9"
 
 services:
   db:
@@ -14,6 +13,9 @@ services:
       - pgdata:/var/lib/postgresql/data
     ports:
       - '${POSTGRES_PORT:-5432}:5432'
+    healthcheck:
+      test: pg_isready -U $${POSTGRES_USER}
+      interval: 5s
 
   redis:
     image: redis:8.2.1
@@ -23,6 +25,40 @@ services:
       - redis_data:/data
     ports:
       - '${REDIS_PORT:-6379}:6379'
+
+  web:
+    build: .
+    env_file: .env
+    environment:
+      POSTGRES_HOST: db
+      REDIS_URL: redis://redis:6379
+    ports:
+      - '5000:5000'
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  worker:
+    build: .
+    command: celery -A app.celery.tasks worker --loglevel=info
+    env_file: .env
+    environment:
+      POSTGRES_HOST: db
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - web
+
+  beat:
+    build: .
+    command: celery -A app.celery.tasks beat --loglevel=info
+    env_file: .env
+    environment:
+      POSTGRES_HOST: db
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - web
 
 volumes:
   pgdata:

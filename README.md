@@ -53,6 +53,8 @@ Replace `JWT_SECRET_KEY` in `.env` with your own value, since it signs the token
 python -c "import secrets; print(secrets.token_hex(32))"
 ```
 
+Debug mode (auto-reload on code changes and an in-browser debugger) is off by default. To turn it on during development, set `FLASK_DEBUG=true` in `.env`.
+
 ### 3. Run
 
 Choose one of the two options.

@@ -60,3 +60,23 @@ def make_check_result(
     session.add(check_result)
     session.flush()
     return check_result
+
+
+def create_user(
+    session: Session, *, username: str | None = None, password: str = "password"
+) -> User:
+    user = make_user(session, username=username, password=password)
+    session.commit()
+    return user
+
+
+def create_service(session: Session, user: User, **fields) -> Service:
+    service = make_service(session, user, **fields)
+    session.commit()
+    return service
+
+
+def create_check_result(session: Session, service: Service, **fields) -> CheckResult:
+    check_result = make_check_result(session, service, **fields)
+    session.commit()
+    return check_result

@@ -10,7 +10,7 @@ from sqlalchemy.pool import StaticPool
 from app import web_app
 from app.celery.tasks import ServiceScheduler
 from app.models import Base
-from tests.api.api_factories import create_user
+from tests.factories import create_user
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL", "sqlite+pysqlite:///:memory:")
 

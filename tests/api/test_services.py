@@ -4,7 +4,7 @@ import pytest
 
 from app.models import CheckResult, Service, ServiceType
 from app.repositories.check_result_repository import MAX_RESULTS_PER_PAGE
-from tests.api.api_factories import create_check_result, create_service, create_user
+from tests.factories import create_check_result, create_service, create_user
 
 SERVICES_URL = "/api/services"
 

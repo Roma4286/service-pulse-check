@@ -113,9 +113,9 @@ def set_active(service_id):
     return card + render_template("_account_stats.html", services=services, oob=True)
 
 
-@services_bp.get("/<int:service_id>/edit")
+@services_bp.get("/<int:service_id>/update")
 @protected
-def edit_form(service_id):
+def update_form(service_id):
     service_repo: ServiceRepository = g.service_repo
 
     service = service_repo.get_service_by_id(
@@ -131,13 +131,13 @@ def edit_form(service_id):
         "is_active": service.is_active,
     }
     return render_template(
-        "services/_service_edit_modal.html", service=service, form=form, errors={}
+        "services/_service_update_modal.html", service=service, form=form, errors={}
     )
 
 
-@services_bp.post("/<int:service_id>/edit")
+@services_bp.post("/<int:service_id>/update")
 @protected
-def edit(service_id):
+def update(service_id):
     user_id = int(get_jwt_identity())
     service_repo: ServiceRepository = g.service_repo
     operation: UpdateService = g.update_service
@@ -148,7 +148,7 @@ def edit(service_id):
 
     def form_with_errors(errors: dict[str, str]) -> str:
         return render_template(
-            "services/_service_edit_modal.html",
+            "services/_service_update_modal.html",
             service=service,
             form=request.form,
             errors=errors,

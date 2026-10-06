@@ -454,7 +454,7 @@ h1 {
     border-top: 1px solid #eee;
 }
 
-.btn-edit {
+.btn-update {
     padding: 10px 20px;
     background: transparent;
     color: #e8710a;
@@ -466,7 +466,7 @@ h1 {
     cursor: pointer;
 }
 
-.btn-edit:hover {
+.btn-update:hover {
     background-color: #e8710a;
     color: #fff;
 }

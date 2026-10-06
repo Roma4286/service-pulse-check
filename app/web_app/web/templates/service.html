@@ -14,8 +14,8 @@
 
         <div class="service-page__actions">
             <button type="button"
-                    class="btn-edit"
-                    hx-get="{{ url_for('web.services.edit_form', service_id=service.id) }}"
+                    class="btn-update"
+                    hx-get="{{ url_for('web.services.update_form', service_id=service.id) }}"
                     hx-target="body"
                     hx-swap="beforeend">Edit service</button>
             <button type="button"

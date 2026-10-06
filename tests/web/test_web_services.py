@@ -40,8 +40,8 @@ def assert_toast(response, status_code: int, message: str):
 PROTECTED_ENDPOINTS = [
     ("GET", "/services/1"),
     ("POST", "/services/1/active"),
-    ("GET", "/services/1/edit"),
-    ("POST", "/services/1/edit"),
+    ("GET", "/services/1/update"),
+    ("POST", "/services/1/update"),
     ("POST", "/services/1/delete"),
     ("GET", "/services/new"),
     ("GET", "/services/new-tile"),
@@ -335,10 +335,10 @@ def test_create_when_scheduling_fails_shows_form_error(client, session, schedule
     assert session.query(Service).count() == 0
 
 
-# GET /services/<id>/edit
+# GET /services/<id>/update
 
 
-def test_edit_form_is_filled_with_current_values(client, session, logged_in):
+def test_update_form_is_filled_with_current_values(client, session, logged_in):
     service = create_service(
         session,
         logged_in,
@@ -348,12 +348,12 @@ def test_edit_form_is_filled_with_current_values(client, session, logged_in):
         is_active=False,
     )
 
-    response = client.get(f"/services/{service.id}/edit")
+    response = client.get(f"/services/{service.id}/update")
 
     html = get_html(response)
     assert response.status_code == 200
     assert 'class="modal"' in html
-    assert f'hx-post="/services/{service.id}/edit"' in html
+    assert f'hx-post="/services/{service.id}/update"' in html
     assert 'name="name" value="api"' in html
     assert 'name="interval_in_seconds" min="1" step="1" value="60"' in html
     assert 'name="timeout_in_seconds" min="0.1" step="0.1" value="5.0"' in html
@@ -361,18 +361,18 @@ def test_edit_form_is_filled_with_current_values(client, session, logged_in):
 
 
 @pytest.mark.usefixtures("logged_in")
-def test_edit_form_for_foreign_service_returns_404_toast(client, session):
+def test_update_form_for_foreign_service_returns_404_toast(client, session):
     foreign_service = create_service(session, create_user(session))
 
-    response = client.get(f"/services/{foreign_service.id}/edit", headers=HX_HEADERS)
+    response = client.get(f"/services/{foreign_service.id}/update", headers=HX_HEADERS)
 
     assert_toast(response, 404, "Service not found")
 
 
-# POST /services/<id>/edit
+# POST /services/<id>/update
 
 
-def edit_form(**overrides) -> dict:
+def update_form(**overrides) -> dict:
     form = {
         "name": "renamed",
         "interval_in_seconds": "30",
@@ -383,14 +383,14 @@ def edit_form(**overrides) -> dict:
     return {key: value for key, value in form.items() if value is not None}
 
 
-def test_edit_updates_service_and_returns_page_card_out_of_band(
+def test_update_updates_service_and_returns_page_card_out_of_band(
     client, session, logged_in
 ):
     service = create_service(
         session, logged_in, name="api", interval_in_seconds=60, timeout_in_seconds=5.0
     )
 
-    response = client.post(f"/services/{service.id}/edit", data=edit_form())
+    response = client.post(f"/services/{service.id}/update", data=update_form())
 
     stored_service = get_stored_service(session, service.id)
     assert (
@@ -404,18 +404,18 @@ def test_edit_updates_service_and_returns_page_card_out_of_band(
     assert "renamed" in html
 
 
-def test_edit_with_unchecked_active_pauses_service(
+def test_update_with_unchecked_active_pauses_service(
     client, session, scheduler, logged_in
 ):
     service = create_service(session, logged_in, is_active=True)
 
-    client.post(f"/services/{service.id}/edit", data=edit_form(is_active=None))
+    client.post(f"/services/{service.id}/update", data=update_form(is_active=None))
 
     assert get_stored_service(session, service.id).is_active is False
     scheduler.delete_task.assert_called_once_with(service.id)
 
 
-def test_edit_with_timeout_above_interval_shows_error_under_timeout(
+def test_update_with_timeout_above_interval_shows_error_under_timeout(
     client, session, logged_in
 ):
     service = create_service(
@@ -423,8 +423,8 @@ def test_edit_with_timeout_above_interval_shows_error_under_timeout(
     )
 
     response = client.post(
-        f"/services/{service.id}/edit",
-        data=edit_form(interval_in_seconds="10", timeout_in_seconds="20"),
+        f"/services/{service.id}/update",
+        data=update_form(interval_in_seconds="10", timeout_in_seconds="20"),
     )
 
     html = get_html(response)
@@ -437,11 +437,11 @@ def test_edit_with_timeout_above_interval_shows_error_under_timeout(
     assert get_stored_service(session, service.id).interval_in_seconds == 60
 
 
-def test_edit_with_invalid_interval_shows_field_error(client, session, logged_in):
+def test_update_with_invalid_interval_shows_field_error(client, session, logged_in):
     service = create_service(session, logged_in, interval_in_seconds=60)
 
     response = client.post(
-        f"/services/{service.id}/edit", data=edit_form(interval_in_seconds="0")
+        f"/services/{service.id}/update", data=update_form(interval_in_seconds="0")
     )
 
     assert any("greater than 0" in error for error in get_field_errors(response))
@@ -450,11 +450,11 @@ def test_edit_with_invalid_interval_shows_field_error(client, session, logged_in
 
 
 @pytest.mark.usefixtures("logged_in")
-def test_edit_for_foreign_service_returns_404_toast(client, session):
+def test_update_for_foreign_service_returns_404_toast(client, session):
     foreign_service = create_service(session, create_user(session), name="foreign")
 
     response = client.post(
-        f"/services/{foreign_service.id}/edit", data=edit_form(), headers=HX_HEADERS
+        f"/services/{foreign_service.id}/update", data=update_form(), headers=HX_HEADERS
     )
 
     assert_toast(response, 404, "Service not found")

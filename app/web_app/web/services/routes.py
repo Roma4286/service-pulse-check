@@ -28,16 +28,9 @@ from .uptime import build_uptime
 services_bp = Blueprint("services", __name__, url_prefix="/services")
 
 
-def get_last_results(services: list[Service]) -> dict[int, CheckResult | None]:
+def get_last_results(services: list[Service]) -> dict[int, CheckResult]:
     check_result_repo: CheckResultRepository = g.check_result_repo
-
-    last_results = {}
-    for service in services:
-        results = check_result_repo.get_result_by_service_id(
-            service.id, page=1, per_page=1
-        )
-        last_results[service.id] = results[0] if results else None
-    return last_results
+    return check_result_repo.get_last_results([service.id for service in services])
 
 
 @services_bp.get("/<int:service_id>")

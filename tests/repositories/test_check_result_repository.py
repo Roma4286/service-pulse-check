@@ -155,6 +155,57 @@ def test_get_result_by_service_id_returns_max_page_size(session, page_size_kwarg
     ]
 
 
+def test_get_last_results_returns_latest_result_per_service(session):
+    repository = CheckResultRepository(session)
+    user = make_user(session)
+    first_service = make_service(session, user)
+    second_service = make_service(session, user)
+    make_check_result(
+        session, first_service, created_at=datetime(2026, 1, 1, tzinfo=UTC)
+    )
+    first_latest = make_check_result(
+        session, first_service, created_at=datetime(2026, 1, 3, tzinfo=UTC)
+    )
+    second_latest = make_check_result(
+        session, second_service, created_at=datetime(2026, 1, 2, tzinfo=UTC)
+    )
+    session.expunge_all()
+
+    last_results = repository.get_last_results([first_service.id, second_service.id])
+
+    assert {service_id: result.id for service_id, result in last_results.items()} == {
+        first_service.id: first_latest.id,
+        second_service.id: second_latest.id,
+    }
+
+
+def test_get_last_results_skips_services_without_results(session):
+    repository = CheckResultRepository(session)
+    user = make_user(session)
+    with_result = make_service(session, user)
+    without_result = make_service(session, user)
+    make_check_result(session, with_result)
+
+    last_results = repository.get_last_results([with_result.id, without_result.id])
+
+    assert set(last_results) == {with_result.id}
+
+
+def test_get_last_results_ignores_services_not_asked_for(session):
+    repository = CheckResultRepository(session)
+    user = make_user(session)
+    asked = make_service(session, user)
+    other = make_service(session, user)
+    make_check_result(session, asked)
+    make_check_result(session, other)
+
+    assert set(repository.get_last_results([asked.id])) == {asked.id}
+
+
+def test_get_last_results_with_no_service_ids_returns_empty_dict(session):
+    assert CheckResultRepository(session).get_last_results([]) == {}
+
+
 def test_delete_result(session):
     repository = CheckResultRepository(session)
     service = make_service(session, make_user(session))

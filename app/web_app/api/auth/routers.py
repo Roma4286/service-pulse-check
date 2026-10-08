@@ -86,17 +86,16 @@ def me():
         return unauthorized("User not found")
 
     services = service_repo.get_services(user_id=user.id)
-    services_with_last_result = []
-    for service in services:
-        last_results = check_result_repo.get_result_by_service_id(
-            service.id, page=1, per_page=1
+    last_results = check_result_repo.get_last_results(
+        [service.id for service in services]
+    )
+    services_with_last_result = [
+        ServiceWithLastResultSchema(
+            **ServiceSchema.model_validate(service).model_dump(),
+            last_result=last_results.get(service.id),
         )
-        services_with_last_result.append(
-            ServiceWithLastResultSchema(
-                **ServiceSchema.model_validate(service).model_dump(),
-                last_result=last_results[0] if last_results else None,
-            )
-        )
+        for service in services
+    ]
 
     data = MeDataSchema(
         user=UserInfoSchema.model_validate(user),

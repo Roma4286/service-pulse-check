@@ -1,8 +1,10 @@
+from datetime import UTC, datetime
+
 import pytest
 from flask_jwt_extended import decode_token
 
-from app.models import User
-from tests.factories import create_user
+from app.models import ResultStatus, User
+from tests.factories import create_check_result, create_service, create_user
 
 
 def login(client, username: str, password: str):
@@ -176,3 +178,87 @@ def test_logout_without_login_returns_200(client):
     response = client.post("/api/auth/logout")
 
     assert response.status_code == 200
+
+
+# GET /auth/me
+
+ME_URL = "/api/auth/me"
+
+
+def test_me_without_login_returns_401(client):
+    response = client.get(ME_URL)
+
+    assert response.status_code == 401
+    assert response.get_json()["error"] == "Unauthorized"
+
+
+def test_me_returns_user_and_empty_home_data(client, logged_in):
+    response = client.get(ME_URL)
+
+    assert response.status_code == 200
+    assert response.get_json() == {
+        "success": True,
+        "message": None,
+        "data": {
+            "user": {"username": logged_in.username},
+            "stats": {"services_total": 0, "services_active": 0},
+            "services": [],
+        },
+    }
+
+
+def test_me_returns_own_services_with_stats(client, session, logged_in):
+    first = create_service(session, logged_in, name="first", is_active=True)
+    second = create_service(session, logged_in, name="second", is_active=False)
+    create_service(session, create_user(session), name="foreign")
+
+    data = client.get(ME_URL).get_json()["data"]
+
+    assert data["stats"] == {"services_total": 2, "services_active": 1}
+    assert [service["id"] for service in data["services"]] == [first.id, second.id]
+    assert data["services"][0] == {
+        "id": first.id,
+        "name": "first",
+        "url": "https://example.com",
+        "type": "http",
+        "is_active": True,
+        "interval_in_seconds": 60,
+        "timeout_in_seconds": 5.0,
+        "last_result": None,
+    }
+
+
+def test_me_returns_latest_check_result_of_each_service(client, session, logged_in):
+    service = create_service(session, logged_in)
+    create_check_result(
+        session,
+        service,
+        status=ResultStatus.SUCCESS,
+        created_at=datetime(2026, 1, 1, tzinfo=UTC),
+    )
+    latest = create_check_result(
+        session,
+        service,
+        status=ResultStatus.FAIL,
+        response_time=0.5,
+        created_at=datetime(2026, 1, 2, tzinfo=UTC),
+    )
+
+    [service_data] = client.get(ME_URL).get_json()["data"]["services"]
+
+    last_result = service_data["last_result"]
+    assert last_result["id"] == latest.id
+    assert last_result["service_id"] == service.id
+    assert last_result["status"] == "fail"
+    assert last_result["response_time"] == 0.5
+    assert last_result["created_at"] is not None
+
+
+def test_me_for_deleted_user_returns_401(client, session, logged_in):
+    session.delete(logged_in)
+    session.commit()
+
+    response = client.get(ME_URL)
+
+    assert response.status_code == 401
+    assert response.get_json() == {"error": "Unauthorized", "message": "User not found"}

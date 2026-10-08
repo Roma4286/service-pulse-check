@@ -55,6 +55,8 @@ python -c "import secrets; print(secrets.token_hex(32))"
 
 Debug mode (auto-reload on code changes and an in-browser debugger) is off by default. To turn it on during development, set `FLASK_DEBUG=true` in `.env`.
 
+If a separate frontend calls the API from another origin (for example, served on `http://localhost:5500`), list that origin in `CORS_ORIGINS` (comma-separated for several). Leave it empty when the frontend is served by this application. Open both the frontend and the API as `localhost`: `127.0.0.1` counts as a different site, and the login cookie would not be sent.
+
 ### 3. Run
 
 Choose one of the two options.

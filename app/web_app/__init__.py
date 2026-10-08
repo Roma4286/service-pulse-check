@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from flask import Flask, g
+from flask_cors import CORS
 
 from app.celery.celery_app import celery_app
 from app.celery.tasks import ServiceScheduler
@@ -34,6 +35,16 @@ def create_app():
 
     spec.register(app)
     jwt.init_app(app)
+
+    cors_origins = settings.cors_origin_list()
+    if cors_origins:
+        CORS(
+            app,
+            resources={r"/api/*": {"origins": cors_origins}},
+            supports_credentials=True,
+            allow_headers=["Content-Type", app.config["JWT_ACCESS_CSRF_HEADER_NAME"]],
+            methods=["GET", "POST", "PATCH", "DELETE"],
+        )
 
     app.extensions["scheduler"] = ServiceScheduler(celery_app)
 

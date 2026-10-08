@@ -37,6 +37,8 @@ REDIS_URL = os.environ.get("REDIS_URL")
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 JWT_ACCESS_TOKEN_EXPIRES_IN_HOURS = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRES_IN_HOURS"))
 
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "")
+
 
 class Settings(BaseSettings):
     pg_url: str = (
@@ -47,6 +49,13 @@ class Settings(BaseSettings):
 
     jwt_secret_key: str = JWT_SECRET_KEY
     jwt_access_token_expires_in_hours: int = JWT_ACCESS_TOKEN_EXPIRES_IN_HOURS
+
+    cors_origins: str = CORS_ORIGINS
+
+    def cors_origin_list(self) -> list[str]:
+        return [
+            origin.strip() for origin in self.cors_origins.split(",") if origin.strip()
+        ]
 
 
 settings = Settings()

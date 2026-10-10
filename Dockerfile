@@ -3,8 +3,11 @@ FROM python:3.14-slim
 WORKDIR /code
 
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD ["sh", "-c", "alembic upgrade head && flask --app app.web_app.main run --host 0.0.0.0 --port 5000"]
+RUN useradd --create-home app
+USER app
+
+CMD ["sh", "-c", "alembic upgrade head && gunicorn --workers 4 --bind 0.0.0.0:5000 app.web_app.main:app"]

@@ -12,7 +12,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
-      - '${POSTGRES_PORT:-5432}:5432'
+      - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
     healthcheck:
       test: pg_isready -U $${POSTGRES_USER}
       interval: 5s
@@ -24,7 +24,7 @@ services:
     volumes:
       - redis_data:/data
     ports:
-      - '${REDIS_PORT:-6379}:6379'
+      - '127.0.0.1:${REDIS_PORT:-6379}:6379'
 
   web:
     build: .

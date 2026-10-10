@@ -17,6 +17,9 @@ from app.repositories.check_result_repository import MAX_RESULTS_PER_PAGE
 
 MAX_TCP_PORT = 65535
 
+MIN_INTERVAL_IN_SECONDS = 10
+DEFAULT_TIMEOUT_IN_SECONDS = 5.0
+
 
 class ServiceListQuerySchema(BaseModel):
     is_active: bool | None = None
@@ -52,8 +55,10 @@ class ServiceCreateSchema(BaseModel):
         description="http(s) URL for http services, host:port for tcp services"
     )
     is_active: bool
-    interval_in_seconds: int = Field(default=10.0, gt=0)
-    timeout_in_seconds: float = Field(default=5.0, gt=0)
+    interval_in_seconds: int = Field(
+        default=MIN_INTERVAL_IN_SECONDS, ge=MIN_INTERVAL_IN_SECONDS
+    )
+    timeout_in_seconds: float = Field(default=DEFAULT_TIMEOUT_IN_SECONDS, gt=0)
 
     @field_validator("url")
     @classmethod
@@ -89,7 +94,7 @@ class ServiceUpdateSchema(BaseModel):
 
     name: str | None = None
     is_active: bool | None = None
-    interval_in_seconds: int | None = Field(default=None, gt=0)
+    interval_in_seconds: int | None = Field(default=None, ge=MIN_INTERVAL_IN_SECONDS)
     timeout_in_seconds: float | None = Field(default=None, gt=0)
 
 

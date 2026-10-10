@@ -190,7 +190,7 @@ def test_new_form_returns_empty_form_with_defaults(client):
     html = get_html(response)
     assert response.status_code == 200
     assert 'hx-post="/services"' in html
-    assert 'name="interval_in_seconds" min="1" step="1" value="10"' in html
+    assert 'name="interval_in_seconds" min="10" step="1" value="10"' in html
     assert 'name="timeout_in_seconds" min="0.1" step="0.1" value="5.0"' in html
     assert re.search(r'<input type="checkbox" name="is_active"\s+checked>', html)
 
@@ -295,10 +295,16 @@ def test_create_tcp_service_with_host_and_port(client, session):
         ({"name": ""}, "Field required"),
         ({"url": "not-a-url"}, "Input should be a valid URL"),
         ({"type": "tcp", "url": "db.example.com"}, "TCP address must be host:port"),
-        ({"interval_in_seconds": "0"}, "greater than 0"),
+        ({"interval_in_seconds": "9"}, "greater than or equal to 10"),
         ({"timeout_in_seconds": "abc"}, "valid number"),
     ],
-    ids=["no-name", "bad-url", "tcp-without-port", "zero-interval", "text-timeout"],
+    ids=[
+        "no-name",
+        "bad-url",
+        "tcp-without-port",
+        "interval-below-minimum",
+        "text-timeout",
+    ],
 )
 @pytest.mark.usefixtures("logged_in")
 def test_create_with_invalid_form_returns_form_with_errors(
@@ -315,7 +321,8 @@ def test_create_with_invalid_form_returns_form_with_errors(
 @pytest.mark.usefixtures("logged_in")
 def test_create_with_timeout_above_interval_shows_form_error(client, session):
     response = client.post(
-        "/services", data=service_form(interval_in_seconds="5", timeout_in_seconds="10")
+        "/services",
+        data=service_form(interval_in_seconds="10", timeout_in_seconds="20"),
     )
 
     assert get_field_errors(response) == [
@@ -355,7 +362,7 @@ def test_update_form_is_filled_with_current_values(client, session, logged_in):
     assert 'class="modal"' in html
     assert f'hx-post="/services/{service.id}/update"' in html
     assert 'name="name" value="api"' in html
-    assert 'name="interval_in_seconds" min="1" step="1" value="60"' in html
+    assert 'name="interval_in_seconds" min="10" step="1" value="60"' in html
     assert 'name="timeout_in_seconds" min="0.1" step="0.1" value="5.0"' in html
     assert not re.search(r'name="is_active"\s+checked', html)
 
@@ -441,11 +448,13 @@ def test_update_with_invalid_interval_shows_field_error(client, session, logged_
     service = create_service(session, logged_in, interval_in_seconds=60)
 
     response = client.post(
-        f"/services/{service.id}/update", data=update_form(interval_in_seconds="0")
+        f"/services/{service.id}/update", data=update_form(interval_in_seconds="9")
     )
 
-    assert any("greater than 0" in error for error in get_field_errors(response))
-    assert 'value="0"' in get_html(response)
+    assert any(
+        "greater than or equal to 10" in error for error in get_field_errors(response)
+    )
+    assert 'value="9"' in get_html(response)
     assert get_stored_service(session, service.id).interval_in_seconds == 60
 
 

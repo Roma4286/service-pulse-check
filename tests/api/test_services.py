@@ -264,6 +264,28 @@ def test_create_http_service_normalizes_url(client):
     assert response.get_json()["data"]["url"] == "https://api.example.com/"
 
 
+@pytest.mark.usefixtures("logged_in")
+def test_create_service_strips_name(client, session):
+    response = client.post(SERVICES_URL, json=service_payload(name="  api  "))
+
+    assert response.status_code == 201
+    data = response.get_json()["data"]
+    assert data["name"] == "api"
+    assert get_stored_service(session, data["id"]).name == "api"
+
+
+@pytest.mark.usefixtures("logged_in")
+def test_create_service_accepts_name_and_url_of_max_length(client):
+    name = "a" * 255
+    url = "https://example.com/" + "a" * 235
+
+    response = client.post(SERVICES_URL, json=service_payload(name=name, url=url))
+
+    assert response.status_code == 201
+    assert response.get_json()["data"]["name"] == name
+    assert response.get_json()["data"]["url"] == url
+
+
 @pytest.mark.parametrize(
     "overrides",
     [
@@ -280,6 +302,8 @@ def test_create_http_service_normalizes_url(client):
         {"type": "tcp", "url": "db.example.com:70000"},
         {"type": "tcp", "url": ":5432"},
         {"type": "tcp", "url": "https://db.example.com"},
+        {"name": "a" * 256},
+        {"url": "https://example.com/" + "a" * 236},
     ],
     ids=[
         "bad-url",
@@ -295,6 +319,8 @@ def test_create_http_service_normalizes_url(client):
         "tcp-port-out-of-range",
         "tcp-without-host",
         "tcp-url-without-port",
+        "name-too-long",
+        "url-too-long",
     ],
 )
 @pytest.mark.usefixtures("logged_in")
@@ -361,14 +387,27 @@ def test_update_service_with_timeout_above_current_interval_returns_400(
     assert get_stored_service(session, service.id).timeout_in_seconds == 5.0
 
 
-def test_update_service_with_invalid_body_returns_400(client, session, logged_in):
-    service = create_service(session, logged_in)
+@pytest.mark.parametrize(
+    "body",
+    [{"interval_in_seconds": 0}, {"name": "a" * 256}],
+    ids=["zero-interval", "name-too-long"],
+)
+def test_update_service_with_invalid_body_returns_400(client, session, logged_in, body):
+    service = create_service(session, logged_in, name="old")
 
-    response = client.patch(
-        f"{SERVICES_URL}/{service.id}", json={"interval_in_seconds": 0}
-    )
+    response = client.patch(f"{SERVICES_URL}/{service.id}", json=body)
 
     assert response.status_code == 400
+    assert get_stored_service(session, service.id).name == "old"
+
+
+def test_update_service_strips_name(client, session, logged_in):
+    service = create_service(session, logged_in, name="old")
+
+    response = client.patch(f"{SERVICES_URL}/{service.id}", json={"name": "  new  "})
+
+    assert response.status_code == 200
+    assert get_stored_service(session, service.id).name == "new"
 
 
 @pytest.mark.usefixtures("logged_in")

@@ -1,3 +1,4 @@
+import pytest
 from flask_jwt_extended import decode_token
 
 from app.models import User
@@ -7,7 +8,7 @@ from tests.factories import create_user
 def register(
     client,
     username: str = "alice",
-    password: str = "secret",
+    password: str = "password123",
     confirm_password: str | None = None,
 ):
     return client.post(
@@ -48,7 +49,7 @@ def test_register_creates_user_and_redirects_to_login(client, session):
     assert response.status_code == 302
     assert response.headers["Location"] == "/login"
     stored_user = session.query(User).filter_by(username="alice").one()
-    assert stored_user.check_password("secret")
+    assert stored_user.check_password("password123")
 
 
 def test_register_strips_username(client, session):
@@ -58,11 +59,30 @@ def test_register_strips_username(client, session):
 
 
 def test_register_with_mismatched_passwords_shows_error(client, session):
-    response = register(client, password="secret", confirm_password="other")
+    response = register(
+        client, password="password123", confirm_password="other-password"
+    )
 
     assert response.status_code == 400
     assert b"Passwords do not match" in response.data
     assert b'value="alice"' in response.data
+    assert session.query(User).count() == 0
+
+
+@pytest.mark.parametrize(
+    ("form", "error"),
+    [
+        ({"username": "al"}, b"Username must be 3-255 characters"),
+        ({"username": "a" * 256}, b"Username must be 3-255 characters"),
+        ({"password": "short12"}, b"Password must be at least 8 characters"),
+    ],
+    ids=["username-too-short", "username-too-long", "password-too-short"],
+)
+def test_register_with_invalid_length_shows_error(client, session, form, error):
+    response = register(client, **form)
+
+    assert response.status_code == 400
+    assert error in response.data
     assert session.query(User).count() == 0
 
 

@@ -9,6 +9,11 @@ from app.models import User
 from app.operations.errors import UsernameAlreadyTakenError
 from app.operations.register_user import RegisterUser, RegisterUserDTO
 from app.repositories.user_repository import UserRepository
+from app.web_app.api.auth.schemas import (
+    MAX_USERNAME_LENGTH,
+    MIN_PASSWORD_LENGTH,
+    MIN_USERNAME_LENGTH,
+)
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -22,16 +27,20 @@ def register():
     password = request.form.get("password", "")
     confirm_password = request.form.get("confirm_password", "")
 
+    error = None
     if not username or not password:
-        return render_template(
-            "register.html",
-            error="Username and password are required",
-            username=username,
-        ), 400
-    if password != confirm_password:
-        return render_template(
-            "register.html", error="Passwords do not match", username=username
-        ), 400
+        error = "Username and password are required"
+    elif not MIN_USERNAME_LENGTH <= len(username) <= MAX_USERNAME_LENGTH:
+        error = (
+            f"Username must be {MIN_USERNAME_LENGTH}-{MAX_USERNAME_LENGTH} characters"
+        )
+    elif len(password) < MIN_PASSWORD_LENGTH:
+        error = f"Password must be at least {MIN_PASSWORD_LENGTH} characters"
+    elif password != confirm_password:
+        error = "Passwords do not match"
+
+    if error is not None:
+        return render_template("register.html", error=error, username=username), 400
 
     operation: RegisterUser = g.register_user
     try:

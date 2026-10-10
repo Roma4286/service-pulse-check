@@ -21,7 +21,7 @@ def get_access_cookie(app, client):
 
 def test_register_creates_user(client, session):
     response = client.post(
-        "/api/auth/register", json={"username": "alice", "password": "secret"}
+        "/api/auth/register", json={"username": "alice", "password": "password123"}
     )
 
     assert response.status_code == 201
@@ -31,14 +31,23 @@ def test_register_creates_user(client, session):
         "data": {"username": "alice"},
     }
     stored_user = session.query(User).filter_by(username="alice").one()
-    assert stored_user.check_password("secret")
+    assert stored_user.check_password("password123")
+
+
+def test_register_strips_username(client, session):
+    response = client.post(
+        "/api/auth/register", json={"username": "  alice  ", "password": "password123"}
+    )
+
+    assert response.status_code == 201
+    assert session.query(User).filter_by(username="alice").count() == 1
 
 
 def test_register_with_taken_username_returns_409(client, session):
     create_user(session, username="alice")
 
     response = client.post(
-        "/api/auth/register", json={"username": "alice", "password": "other"}
+        "/api/auth/register", json={"username": "alice", "password": "other-password"}
     )
 
     assert response.status_code == 409
@@ -48,8 +57,24 @@ def test_register_with_taken_username_returns_409(client, session):
 
 @pytest.mark.parametrize(
     "body",
-    [{"username": "alice"}, {"password": "secret"}, {}],
-    ids=["no-password", "no-username", "empty"],
+    [
+        {"username": "alice"},
+        {"password": "password123"},
+        {},
+        {"username": "al", "password": "password123"},
+        {"username": "  al  ", "password": "password123"},
+        {"username": "a" * 256, "password": "password123"},
+        {"username": "alice", "password": "short12"},
+    ],
+    ids=[
+        "no-password",
+        "no-username",
+        "empty",
+        "username-too-short",
+        "username-too-short-after-strip",
+        "username-too-long",
+        "password-too-short",
+    ],
 )
 def test_register_with_invalid_body_returns_400(client, session, body):
     response = client.post("/api/auth/register", json=body)

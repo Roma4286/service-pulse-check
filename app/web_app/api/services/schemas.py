@@ -1,9 +1,11 @@
 from datetime import datetime
+from typing import Annotated
 
 from pydantic import (
     BaseModel,
     Field,
     HttpUrl,
+    StringConstraints,
     TypeAdapter,
     ValidationError,
     ValidationInfo,
@@ -19,6 +21,9 @@ MAX_TCP_PORT = 65535
 
 MIN_INTERVAL_IN_SECONDS = 10
 DEFAULT_TIMEOUT_IN_SECONDS = 5.0
+
+
+ServiceText = Annotated[str, StringConstraints(strip_whitespace=True, max_length=255)]
 
 
 class ServiceListQuerySchema(BaseModel):
@@ -49,9 +54,9 @@ def validate_tcp_address(address: str) -> str:
 
 
 class ServiceCreateSchema(BaseModel):
-    name: str
+    name: ServiceText
     type: ServiceType
-    url: str = Field(
+    url: ServiceText = Field(
         description="http(s) URL for http services, host:port for tcp services"
     )
     is_active: bool
@@ -63,7 +68,6 @@ class ServiceCreateSchema(BaseModel):
     @field_validator("url")
     @classmethod
     def check_url_matches_type(cls, url: str, info: ValidationInfo) -> str:
-        url = url.strip()
         service_type = info.data.get("type")
         if service_type == ServiceType.HTTP:
             return validate_http_url(url)
@@ -92,7 +96,7 @@ class ServiceUpdateSchema(BaseModel):
         }
     }
 
-    name: str | None = None
+    name: ServiceText | None = None
     is_active: bool | None = None
     interval_in_seconds: int | None = Field(default=None, ge=MIN_INTERVAL_IN_SECONDS)
     timeout_in_seconds: float | None = Field(default=None, gt=0)

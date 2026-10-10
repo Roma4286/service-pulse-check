@@ -20,6 +20,7 @@ from .schemas import (
     AccountStatsSchema,
     MeDataSchema,
     MeResponseSchema,
+    RegisterUserSchema,
     ServiceWithLastResultSchema,
     UserInfoSchema,
     UserResponseSchema,
@@ -31,12 +32,12 @@ auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
 @auth_bp.post("/register")
 @spec.validate(
-    body=UserSchema,
+    body=RegisterUserSchema,
     resp=Response("HTTP_409", HTTP_201=UserResponseSchema),
     tags=["auth"],
 )
 def register():
-    body: UserSchema = request.context.body
+    body: RegisterUserSchema = request.context.body
     operation: RegisterUser = g.register_user
 
     user: User = operation(

@@ -1,6 +1,6 @@
-from sqlalchemy import func, select
+from sqlalchemy import select
 
-from app.models import CheckResult, ResultStatus
+from app.models import CheckResult, ResultStatus, Service
 
 from .base_repository import BaseRepository
 
@@ -28,31 +28,21 @@ class CheckResultRepository(BaseRepository):
         return results
 
     def get_last_results(self, service_ids: list[int]) -> dict[int, CheckResult]:
-        """Latest result of each service, in one query: {service_id: result}.
-
-        Services without results are absent from the dict. "Latest" uses the same
-        order as get_result_by_service_id: created_at, then id on a tie.
-        """
         if not service_ids:
             return {}
 
-        ranked = (
-            select(
-                CheckResult.id,
-                func.row_number()
-                .over(
-                    partition_by=CheckResult.service_id,
-                    order_by=(CheckResult.created_at.desc(), CheckResult.id.desc()),
-                )
-                .label("rank"),
-            )
-            .where(CheckResult.service_id.in_(service_ids))
-            .subquery()
+        last_result_id = (
+            select(CheckResult.id)
+            .where(CheckResult.service_id == Service.id)
+            .order_by(CheckResult.created_at.desc(), CheckResult.id.desc())
+            .limit(1)
+            .correlate(Service)
+            .scalar_subquery()
         )
+        last_result_ids = select(last_result_id).where(Service.id.in_(service_ids))
         results = (
             self.db_session.query(CheckResult)
-            .join(ranked, CheckResult.id == ranked.c.id)
-            .filter(ranked.c.rank == 1)
+            .filter(CheckResult.id.in_(last_result_ids))
             .all()
         )
         for result in results:

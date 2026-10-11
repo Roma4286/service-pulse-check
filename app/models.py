@@ -78,4 +78,11 @@ class CheckResult(Base):
     response_time: Mapped[float] = mapped_column()
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
-    __table_args__ = (Index("ix_check_results_service_id", "service_id"),)
+    __table_args__ = (
+        Index(
+            "ix_check_results_service_id_created_at_id",
+            "service_id",
+            "created_at",
+            "id",
+        ),
+    )

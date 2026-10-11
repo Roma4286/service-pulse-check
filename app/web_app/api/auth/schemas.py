@@ -4,6 +4,10 @@ from pydantic import BaseModel, StringConstraints
 
 from ..services.schemas import CheckResultSchema, ServiceSchema
 
+MIN_USERNAME_LENGTH = 3
+MAX_USERNAME_LENGTH = 255
+MIN_PASSWORD_LENGTH = 8
+
 
 class UserSchema(BaseModel):
     username: Annotated[str, StringConstraints(strip_whitespace=True)]
@@ -15,11 +19,11 @@ class RegisterUserSchema(BaseModel):
         str,
         StringConstraints(
             strip_whitespace=True,
-            min_length=3,
-            max_length=255,
+            min_length=MIN_USERNAME_LENGTH,
+            max_length=MAX_USERNAME_LENGTH,
         ),
     ]
-    password: Annotated[str, StringConstraints(min_length=8)]
+    password: Annotated[str, StringConstraints(min_length=MIN_PASSWORD_LENGTH)]
 
 
 class UsernameResponseSchema(BaseModel):

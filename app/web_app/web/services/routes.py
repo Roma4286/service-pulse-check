@@ -79,9 +79,6 @@ def set_active(service_id):
     service_repo: ServiceRepository = g.service_repo
     operation: UpdateService = g.update_service
 
-    if service_repo.get_service_by_id(user_id=user_id, service_id=service_id) is None:
-        return not_found()
-
     service = operation(
         dto=UpdateServiceDTO(
             service_id=service_id,

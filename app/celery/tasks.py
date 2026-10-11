@@ -1,4 +1,5 @@
 import logging
+from datetime import timedelta
 
 from celery import Celery
 from redbeat import RedBeatSchedulerEntry
@@ -16,6 +17,8 @@ from .checkers.tcp import TcpChecker
 logger = logging.getLogger(__name__)
 
 celery = celery_app
+
+CHECK_RESULTS_RETENTION_DAYS = 30
 
 CHECKERS: dict[ServiceType, BaseChecker] = {
     ServiceType.HTTP: HttpChecker(),
@@ -38,6 +41,17 @@ def check_service_task(
         )
     except Exception:
         logger.exception("Failed to save check result for service_id=%s", service_id)
+    finally:
+        Session.remove()
+
+
+@celery.task(name="purge_old_check_results")
+def purge_old_check_results_task():
+    session = Session()
+    try:
+        CheckResultRepository(session).delete_results_older_than(
+            timedelta(days=CHECK_RESULTS_RETENTION_DAYS)
+        )
     finally:
         Session.remove()
 

@@ -1,4 +1,6 @@
-from sqlalchemy import select
+from datetime import timedelta
+
+from sqlalchemy import delete, func, select
 
 from app.models import CheckResult, ResultStatus, Service
 
@@ -93,3 +95,29 @@ class CheckResultRepository(BaseRepository):
         self.db_flush_or_commit(is_db_transaction)
 
         return deleted
+
+    def delete_results_older_than(self, age: timedelta) -> int:
+        cutoff = self.db_session.scalar(select(func.now())) - age
+
+        deleted_total = 0
+        for service_id in self.db_session.scalars(select(Service.id)).all():
+            batch_ids = (
+                select(CheckResult.id)
+                .where(
+                    CheckResult.service_id == service_id,
+                    CheckResult.created_at < cutoff,
+                )
+                .limit(10000)
+            )
+            while True:
+                deleted = self.db_session.execute(
+                    delete(CheckResult)
+                    .where(CheckResult.id.in_(batch_ids))
+                    .execution_options(synchronize_session=False)
+                ).rowcount
+                self.db_commit()
+                deleted_total += deleted
+                if deleted < 10000:
+                    break
+
+        return deleted_total

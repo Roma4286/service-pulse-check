@@ -277,3 +277,36 @@ def test_delete_results_by_service_id_in_transaction_is_not_committed(session):
     repository.db_rollback()
 
     assert session.query(CheckResult).count() == 2
+
+
+def utc_now() -> datetime:
+    return datetime.now(UTC).replace(tzinfo=None)
+
+
+def test_delete_results_older_than_keeps_recent_results(session):
+    repository = CheckResultRepository(session)
+    user = make_user(session)
+    first_service = make_service(session, user)
+    second_service = make_service(session, user)
+    now = utc_now()
+    for service in (first_service, second_service):
+        make_check_result(session, service, created_at=now - timedelta(days=31))
+    recent_result = make_check_result(
+        session, first_service, created_at=now - timedelta(days=29)
+    )
+    session.commit()
+
+    deleted = repository.delete_results_older_than(timedelta(days=30))
+
+    assert deleted == 2
+    assert [result.id for result in session.query(CheckResult)] == [recent_result.id]
+
+
+def test_delete_results_older_than_without_old_results_deletes_nothing(session):
+    repository = CheckResultRepository(session)
+    service = make_service(session, make_user(session))
+    make_check_result(session, service)
+    session.commit()
+
+    assert repository.delete_results_older_than(timedelta(days=30)) == 0
+    assert session.query(CheckResult).count() == 1

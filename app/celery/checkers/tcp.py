@@ -27,9 +27,9 @@ class TcpChecker(BaseChecker):
         start = time.monotonic()
         try:
             with socket.create_connection((host, port), timeout=timeout_in_seconds):
-                status_code = True
+                is_up = True
         except OSError:
-            status_code = False
+            is_up = False
 
         response_time = time.monotonic() - start
-        return status_code, response_time
+        return is_up, response_time

@@ -6,10 +6,16 @@ import requests
 from app.celery.checkers.http import HttpChecker
 
 
-def test_check_requests_url_with_timeout(fake_get):
+def test_check_requests_url_with_timeout_without_downloading_body(fake_get):
     HttpChecker().check("https://example.com", 2.5)
 
-    fake_get.assert_called_once_with("https://example.com", timeout=2.5)
+    fake_get.assert_called_once_with("https://example.com", timeout=2.5, stream=True)
+
+
+def test_check_closes_response(fake_get):
+    HttpChecker().check("https://example.com", 2.5)
+
+    fake_get.return_value.close.assert_called_once_with()
 
 
 @pytest.mark.parametrize("status_code", [200, 204, 301, 399])

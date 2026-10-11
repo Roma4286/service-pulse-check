@@ -1,56 +1,34 @@
-import os
 from pathlib import Path
 
-from dotenv import load_dotenv
-from pydantic.v1 import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ENV_PATH = Path(__file__).resolve().parent.parent / ".env"
 
-if ENV_PATH.is_file():
-    load_dotenv(dotenv_path=ENV_PATH)
-
-REQUIRED_ENV_VARS = (
-    "POSTGRES_HOST",
-    "POSTGRES_PORT",
-    "POSTGRES_DB",
-    "POSTGRES_USER",
-    "POSTGRES_PASSWORD",
-    "REDIS_URL",
-    "JWT_SECRET_KEY",
-    "JWT_ACCESS_TOKEN_EXPIRES_IN_HOURS",
-)
-
-missing_env_vars = [name for name in REQUIRED_ENV_VARS if not os.getenv(name)]
-if missing_env_vars:
-    raise RuntimeError(
-        f"Missing required environment variables: {', '.join(missing_env_vars)}. "
-    )
-
-PG_HOST = os.getenv("POSTGRES_HOST")
-PG_PORT = os.getenv("POSTGRES_PORT")
-PG_NAME = os.getenv("POSTGRES_DB")
-PG_USER = os.getenv("POSTGRES_USER")
-PG_PASSWORD = os.getenv("POSTGRES_PASSWORD")
-
-REDIS_URL = os.environ.get("REDIS_URL")
-
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
-JWT_ACCESS_TOKEN_EXPIRES_IN_HOURS = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRES_IN_HOURS"))
-
-CORS_ORIGINS = os.getenv("CORS_ORIGINS", "")
-
 
 class Settings(BaseSettings):
-    pg_url: str = (
-        f"postgresql+psycopg2://{PG_USER}:{PG_PASSWORD}@{PG_HOST}:{PG_PORT}/{PG_NAME}"
+    model_config = SettingsConfigDict(
+        env_file=ENV_PATH, env_ignore_empty=True, extra="ignore"
     )
 
-    redis_url: str = REDIS_URL
+    postgres_host: str
+    postgres_port: int
+    postgres_db: str
+    postgres_user: str
+    postgres_password: str
 
-    jwt_secret_key: str = JWT_SECRET_KEY
-    jwt_access_token_expires_in_hours: int = JWT_ACCESS_TOKEN_EXPIRES_IN_HOURS
+    redis_url: str
 
-    cors_origins: str = CORS_ORIGINS
+    jwt_secret_key: str
+    jwt_access_token_expires_in_hours: int
+
+    cors_origins: str = ""
+
+    @property
+    def pg_url(self) -> str:
+        return (
+            f"postgresql+psycopg2://{self.postgres_user}:{self.postgres_password}"
+            f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
+        )
 
     def cors_origin_list(self) -> list[str]:
         return [

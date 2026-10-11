@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 
 from app.celery.tasks import ServiceScheduler
-from app.models import Service
 from app.repositories.service_repository import ServiceRepository
 
 from .errors import (
@@ -21,7 +20,7 @@ class DeleteService:
     scheduler: ServiceScheduler
     service_repository: ServiceRepository
 
-    def __call__(self, *, dto: DeleteServiceDTO) -> Service:
+    def __call__(self, *, dto: DeleteServiceDTO) -> bool:
         deleted = self.service_repository.delete_service(
             dto.user_id, dto.service_id, is_db_transaction=True
         )

@@ -1,7 +1,7 @@
 # Service Pulse Check
 <<<<<<< HEAD
 ![CI](https://github.com/Roma4286/service-pulse-check/actions/workflows/ci.yml/badge.svg?branch=main)
-![Coverage](https://img.shields.io/badge/coverage-0%25-brightgreen)
+![Coverage](https://img.shields.io/badge/coverage-97%25-brightgreen)
 =======
 ![Coverage](https://img.shields.io/badge/coverage-97%25-brightgreen)
 >>>>>>> 612124997dea5f0512f8ef4fae5ec1345577a70e

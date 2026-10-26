@@ -44,4 +44,21 @@ jobs:
         run: pip install -r requirements.txt 
     
       - name: Run tests
-        run: pytest --cov=app
+        run: pytest --cov=. --cov-report=json
+
+      - name: Update Badge in README
+        run: |
+          PCT=$(python -c "import json; f = open('coverage.json'); d = json.load(f); print(round(d['totals']['percent_covered']))")
+          
+          if [ "$PCT" -ge 90 ]; then COLOR="brightgreen"
+          elif [ "$PCT" -ge 75 ]; then COLOR="green"
+          elif [ "$PCT" -ge 50 ]; then COLOR="yellow"
+          else COLOR="red"; fi
+
+          sed -i -E "s|coverage-[0-9]+%25-[a-z]+|coverage-${PCT}%25-${COLOR}|g" README.md
+
+      - name: Commit and push if changed
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: update coverage badge to matches CI [skip ci]"
+          file_pattern: 'README.md'

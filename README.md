@@ -1,5 +1,5 @@
 # Service Pulse Check
-![Coverage](https://shields.io)
+![Coverage](https://img.shields.io/badge/coverage-0%25-brightgreen)
 
 An uptime monitoring service. You add your services through the web interface or the REST API, and background workers check them at a configured interval and keep the history of every check.
 

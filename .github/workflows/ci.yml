@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -27,6 +30,8 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -58,6 +63,7 @@ jobs:
           sed -i -E "s|coverage-[0-9]+%25-[a-z]+|coverage-${PCT}%25-${COLOR}|g" README.md
 
       - name: Commit and push if changed
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "chore: update coverage badge to matches CI [skip ci]"

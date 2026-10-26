@@ -1,10 +1,6 @@
 # Service Pulse Check
-<<<<<<< HEAD
 ![CI](https://github.com/Roma4286/service-pulse-check/actions/workflows/ci.yml/badge.svg?branch=main)
 ![Coverage](https://img.shields.io/badge/coverage-97%25-brightgreen)
-=======
-![Coverage](https://img.shields.io/badge/coverage-97%25-brightgreen)
->>>>>>> 612124997dea5f0512f8ef4fae5ec1345577a70e
 
 An uptime monitoring service. You add your services through the web interface or the REST API, and background workers check them at a configured interval and keep the history of every check.
 
